@@ -5,6 +5,8 @@ This script ensures that the Rust components can be properly built and integrate
 with the existing Python testing infrastructure.
 """
 
+from setuptools import setup
+from setuptools_rust import Binding, RustExtension
 import os
 import sys
 import subprocess
@@ -65,7 +67,7 @@ def run_python_tests():
     """Run Python tests to verify integration."""
     try:
         # Change to the project root
-        project_root = Path(__file__).parent.parent.absolute()
+        project_root = Path(__file__).parent.absolute()
         print(f"Running Python tests in {project_root}")
         
         # Run a simple test to verify the setup
@@ -137,8 +139,12 @@ def main():
     if not setup_development_environment():
         sys.exit(1)
     
-    print("\n🎉 Setup completed successfully!"
+    print("\n🎉 Setup completed successfully!")
 
 
 if __name__ == "__main__":
-    main()
+    # If no arguments are provided, run the standard setuptools setup
+    if len(sys.argv) == 1 or 'bdist_wheel' in sys.argv or 'sdist' in sys.argv:
+        setup()
+    else:
+        main()

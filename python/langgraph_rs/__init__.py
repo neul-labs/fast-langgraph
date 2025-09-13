@@ -6,19 +6,24 @@ using Rust for significant performance improvements over the Python implementati
 
 __version__ = "0.1.0"
 
-# Import the Rust module
+# Import the Rust modules
 try:
     from .langgraph_rs import GraphExecutor
-    _has_rust_backend = True
+    # Try to import all Rust modules
+    try:
+        from .langgraph_rs import PregelExecutor, Channel, LastValueChannel, Checkpoint
+        _has_rust_backend = True
+    except ImportError:
+        _has_rust_backend = False
 except ImportError:
     _has_rust_backend = False
 
 # Fallback to Python implementation if Rust is not available
 if _has_rust_backend:
-    # Use the Rust implementation
-    PregelExecutor = GraphExecutor
+    # Use the Rust implementations
+    pass  # All classes are already imported from Rust
 else:
-    # Fallback to Python implementation (simplified)
+    # Fallback to Python implementations (simplified)
     class PregelExecutor:
         def __init__(self):
             pass
@@ -30,5 +35,53 @@ else:
         def add_node(self, node_id, triggers, channels):
             # In a real implementation, this would add a node to the graph
             pass
+    
+    class Channel:
+        def __init__(self):
+            pass
+            
+        def update(self, values):
+            pass
+            
+        def get(self):
+            pass
+            
+        def is_available(self):
+            return False
+    
+    class LastValueChannel(Channel):
+        def __init__(self):
+            super().__init__()
+            
+        def update(self, values):
+            pass
+            
+        def get(self):
+            return None
+            
+        def is_available(self):
+            return False
+    
+    class Checkpoint:
+        def __init__(self):
+            self.channel_values = {}
+            self.channel_versions = {}
+            self.versions_seen = {}
+            
+        def to_json(self):
+            return "{}"
+            
+        def from_json(self, json_str):
+            return Checkpoint()
 
-__all__ = ["PregelExecutor"]
+# Import shim module
+from . import shim
+
+__all__ = [
+    "PregelExecutor", 
+    "Channel", 
+    "LastValueChannel", 
+    "Checkpoint",
+    "GraphExecutor",  # For backward compatibility
+    "shim"  # For monkeypatching existing langgraph
+]

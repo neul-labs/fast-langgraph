@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2021"
 description = "Rust implementation of LangGraph for performance enhancements"
 license = "MIT"
+repository = "https://github.com/langchain-ai/langgraph"
+homepage = "https://github.com/langchain-ai/langgraph"
+documentation = "https://langchain-ai.github.io/langgraph/"
+readme = "README.md"
+keywords = ["langgraph", "rust", "ai", "graph", "performance"]
+categories = ["science", "algorithms", "data-structures"]
 
 [lib]
 name = "langgraph_rs"

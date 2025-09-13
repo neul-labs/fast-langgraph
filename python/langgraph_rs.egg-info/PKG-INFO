@@ -1,3 +1,35 @@
+Metadata-Version: 2.4
+Name: langgraph-rs
+Version: 0.1.0
+Summary: High-performance Rust implementation of LangGraph components
+Author-email: LangGraph Team <team@langchain.dev>
+License: MIT
+Project-URL: Homepage, https://github.com/langchain-ai/langgraph
+Project-URL: Repository, https://github.com/langchain-ai/langgraph
+Project-URL: Documentation, https://langchain-ai.github.io/langgraph/
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Rust
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: setuptools-rust>=1.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-benchmark>=3.0; extra == "dev"
+Requires-Dist: criterion>=0.5; extra == "dev"
+Dynamic: license-file
+
 # LangGraph Rust Implementation
 
 [![PyPI version](https://badge.fury.io/py/langgraph-rs.svg)](https://badge.fury.io/py/langgraph-rs)
@@ -30,9 +62,7 @@ pip install -e .
 
 ## Usage
 
-### Direct Usage
-
-The Rust implementation can be used directly with no changes to existing code:
+The Rust implementation is automatically used when available, with graceful degradation to the Python implementation when needed:
 
 ```python
 from langgraph_rs import PregelExecutor
@@ -42,31 +72,6 @@ executor = PregelExecutor()
 
 # Execute a graph
 result = executor.execute_graph({"input": "data"})
-```
-
-### Monkeypatching Existing Code
-
-For seamless integration with existing langgraph code, you can monkeypatch the existing classes:
-
-```python
-import langgraph_rs
-
-# Patch the existing langgraph with Rust implementations
-langgraph_rs.shim.patch_langgraph()
-
-# Now your existing code will automatically use the Rust backend
-from langgraph.pregel import Pregel
-app = Pregel(...)  # This now uses the Rust implementation
-result = app.invoke(input_data)
-```
-
-### Auto-Patching
-
-To automatically patch langgraph on import, set the environment variable:
-
-```bash
-export LANGGRAPH_RS_AUTO_PATCH=1
-python your_langgraph_app.py
 ```
 
 ## Components
