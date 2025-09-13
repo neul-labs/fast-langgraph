@@ -1,0 +1,46 @@
+[package]
+name = "langgraph-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust implementation of LangGraph for performance enhancements"
+license = "MIT"
+
+[lib]
+name = "langgraph_rs"
+crate-type = ["cdylib", "rlib"]
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[bench]]
+name = "langgraph_benchmark"
+harness = false
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module", "abi3-py37", "multiple-pymethods"], optional = true }
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+petgraph = "0.6"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "postgres", "mysql", "chrono", "uuid"], optional = true }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde", "js"] }
+async-trait = "0.1"
+rmp-serde = { version = "1.0", optional = true }
+flate2 = { version = "1.0", optional = true }
+num_cpus = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
+criterion = "0.5"
+
+[features]
+default = ["python"]
+python = ["pyo3"]
+msgpack = ["rmp-serde"]
+compression = ["flate2"]
+checkpoint-postgres = ["sqlx", "sqlx/runtime-tokio-rustls", "sqlx/postgres"]
+checkpoint-mysql = ["sqlx", "sqlx/runtime-tokio-rustls", "sqlx/mysql"]
+checkpoint-sqlite = ["sqlx", "sqlx/runtime-tokio-rustls", "sqlx/sqlite"]
