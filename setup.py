@@ -131,20 +131,22 @@ def install_dependencies():
 
 def main():
     """Main setup function."""
+    # Check if we're in build mode (don't run environment checks)
+    is_build_mode = any(arg in sys.argv for arg in ['bdist_wheel', 'sdist', 'build', 'build_ext'])
+    
     if len(sys.argv) > 1 and sys.argv[1] == '--install':
         print("Installing dependencies...")
         if not install_dependencies():
             sys.exit(1)
-    
-    if not setup_development_environment():
-        sys.exit(1)
-    
-    print("\n🎉 Setup completed successfully!")
+    elif not is_build_mode:
+        # Only run environment checks if not in build mode
+        if not setup_development_environment():
+            sys.exit(1)
+        print("\n🎉 Setup completed successfully!")
+    else:
+        # In build mode, just run setup
+        setup()
 
 
 if __name__ == "__main__":
-    # If no arguments are provided, run the standard setuptools setup
-    if len(sys.argv) == 1 or 'bdist_wheel' in sys.argv or 'sdist' in sys.argv:
-        setup()
-    else:
-        main()
+    main()

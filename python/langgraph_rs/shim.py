@@ -11,6 +11,8 @@ from typing import Any, Optional
 # Import the Rust modules
 try:
     from .langgraph_rs import GraphExecutor as RustPregelExecutor
+    from .langgraph_rs import BaseChannel as RustBaseChannel
+    from .langgraph_rs import LastValue as RustLastValue
     from .langgraph_rs import Channel as RustChannel
     from .langgraph_rs import LastValueChannel as RustLastValueChannel
     from .langgraph_rs import Checkpoint as RustCheckpoint
@@ -51,12 +53,12 @@ def patch_langgraph() -> bool:
         # Patch channel classes
         if hasattr(langgraph.channels, 'BaseChannel'):
             langgraph.channels.BaseChannel._original_class = langgraph.channels.BaseChannel
-            langgraph.channels.BaseChannel = RustChannel
+            langgraph.channels.BaseChannel = RustBaseChannel
             print("✓ Successfully patched langgraph.channels.BaseChannel with Rust implementation")
             
         if hasattr(langgraph.channels, 'LastValue'):
             langgraph.channels.LastValue._original_class = langgraph.channels.LastValue
-            langgraph.channels.LastValue = RustLastValueChannel
+            langgraph.channels.LastValue = RustLastValue
             print("✓ Successfully patched langgraph.channels.LastValue with Rust implementation")
         
         # Patch checkpoint classes
@@ -130,6 +132,8 @@ __all__ = [
     "patch_langgraph",
     "unpatch_langgraph",
     "RustPregelExecutor",
+    "RustBaseChannel",
+    "RustLastValue",
     "RustChannel",
     "RustLastValueChannel",
     "RustCheckpoint"
