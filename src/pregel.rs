@@ -147,7 +147,7 @@ impl<T: Clone + Send + Sync + 'static, U: Clone + Send + Sync + 'static> PregelE
         let start_time = std::time::Instant::now();
         let mut all_writes = Vec::new();
         
-        for step in 0..self.config.max_supersteps {
+        for _step in 0..self.config.max_supersteps {
             let writes = self.execute_step().await?;
             
             // If no writes were produced, we're done

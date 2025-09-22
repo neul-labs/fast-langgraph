@@ -5,7 +5,7 @@ This script ensures that the Rust components can be properly built and integrate
 with the existing Python testing infrastructure.
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools_rust import Binding, RustExtension
 import os
 import sys
@@ -132,8 +132,8 @@ def install_dependencies():
 def main():
     """Main setup function."""
     # Check if we're in build mode (don't run environment checks)
-    is_build_mode = any(arg in sys.argv for arg in ['bdist_wheel', 'sdist', 'build', 'build_ext'])
-    
+    is_build_mode = any(arg in sys.argv for arg in ['bdist_wheel', 'sdist', 'build', 'build_ext', 'install'])
+
     if len(sys.argv) > 1 and sys.argv[1] == '--install':
         print("Installing dependencies...")
         if not install_dependencies():
@@ -144,8 +144,48 @@ def main():
             sys.exit(1)
         print("\n🎉 Setup completed successfully!")
     else:
-        # In build mode, just run setup
-        setup()
+        # In build mode, run the actual setup
+        setup(
+            name="langgraph-rs",
+            version="0.1.0",
+            author="LangGraph Team",
+            author_email="",
+            description="High-performance Rust implementation of LangGraph components",
+            long_description=open("README.md").read(),
+            long_description_content_type="text/markdown",
+            url="https://github.com/langchain-ai/langgraph",
+            packages=find_packages(),
+            rust_extensions=[
+                RustExtension(
+                    "langgraph_rs.langgraph_rs",
+                    binding=Binding.PyO3,
+                    debug=False,
+                )
+            ],
+            classifiers=[
+                "Development Status :: 3 - Alpha",
+                "Intended Audience :: Developers",
+                "License :: OSI Approved :: MIT License",
+                "Programming Language :: Python :: 3",
+                "Programming Language :: Python :: 3.8",
+                "Programming Language :: Python :: 3.9",
+                "Programming Language :: Python :: 3.10",
+                "Programming Language :: Python :: 3.11",
+                "Programming Language :: Python :: 3.12",
+                "Programming Language :: Rust",
+            ],
+            python_requires=">=3.8",
+            install_requires=[
+                "typing-extensions",
+            ],
+            extras_require={
+                "dev": [
+                    "pytest",
+                    "langgraph",  # For testing compatibility
+                ],
+            },
+            zip_safe=False,
+        )
 
 
 if __name__ == "__main__":

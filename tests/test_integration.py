@@ -1,18 +1,169 @@
 """
-Test to verify that the Rust implementation can be integrated with existing Python test infrastructure.
-This file demonstrates how the Rust components would be tested alongside existing Python tests.
+Integration tests for LangGraph Rust implementations.
+
+These tests verify that the Rust implementations are compatible with the
+original LangGraph Python API.
 """
 
 import pytest
-from typing import Any, Dict, List, Optional, Union
-import time
+import sys
+import os
+
+# Add the local package to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+try:
+    import langgraph_rs
+    RUST_AVAILABLE = langgraph_rs.is_rust_available()
+except ImportError:
+    RUST_AVAILABLE = False
+
+class TestDirectUsage:
+    """Test direct usage of Rust implementations."""
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_last_value_channel_creation(self):
+        """Test creating a LastValue channel."""
+        channel = langgraph_rs.LastValue(str, "test_channel")
+        assert channel is not None
+        assert channel.key == "test_channel"
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_last_value_channel_operations(self):
+        """Test LastValue channel operations."""
+        channel = langgraph_rs.LastValue(str, "test")
+
+        # Initially not available
+        assert not channel.is_available()
+
+        # Update with a value
+        result = channel.update(["test_value"])
+        assert result is True
+        assert channel.is_available()
+
+        # Get the value
+        value = channel.get()
+        assert value == "test_value"
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_checkpoint_creation(self):
+        """Test creating a checkpoint."""
+        checkpoint = langgraph_rs.Checkpoint()
+        assert checkpoint is not None
+        assert checkpoint.v == 1
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_checkpoint_serialization(self):
+        """Test checkpoint serialization."""
+        checkpoint = langgraph_rs.Checkpoint()
+        json_str = checkpoint.to_json()
+        assert isinstance(json_str, str)
+        assert '"v": 1' in json_str
+
+        # Test deserialization
+        new_checkpoint = langgraph_rs.Checkpoint.from_json(json_str)
+        assert new_checkpoint.v == checkpoint.v
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_pregel_creation(self):
+        """Test creating a Pregel instance."""
+        # Basic creation test
+        pregel = langgraph_rs.Pregel(
+            nodes={},
+            output_channels=[],
+            input_channels=[]
+        )
+        assert pregel is not None
+
+class TestShimModule:
+    """Test the shim module functionality."""
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_patch_status(self):
+        """Test getting patch status."""
+        status = langgraph_rs.shim.get_patch_status()
+        assert isinstance(status, dict)
+        assert all(isinstance(v, bool) for v in status.values())
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_patch_unpatch_cycle(self):
+        """Test patching and unpatching."""
+        # Get initial status
+        initial_status = langgraph_rs.shim.get_patch_status()
+
+        # Try to patch
+        patch_result = langgraph_rs.shim.patch_langgraph()
+
+        # Unpatch
+        unpatch_result = langgraph_rs.shim.unpatch_langgraph()
+
+        # Check that unpatching succeeded
+        assert unpatch_result is True
+
+class TestPerformance:
+    """Basic performance tests."""
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_channel_update_performance(self):
+        """Test channel update performance."""
+        import time
+
+        channel = langgraph_rs.LastValue(int, "perf_test")
+
+        # Warm up
+        for i in range(100):
+            channel.update([i])
+
+        # Time the operations
+        start_time = time.time()
+        for i in range(10000):
+            channel.update([i])
+        end_time = time.time()
+
+        duration = end_time - start_time
+        ops_per_second = 10000 / duration
+
+        print(f"Channel updates: {ops_per_second:.0f} ops/sec")
+
+        # Should be significantly faster than pure Python
+        # This is a basic smoke test
+        assert ops_per_second > 1000  # At least 1K ops/sec
+
+    @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
+    def test_checkpoint_serialization_performance(self):
+        """Test checkpoint serialization performance."""
+        import time
+
+        checkpoint = langgraph_rs.Checkpoint()
+        # Add some data
+        checkpoint.channel_values = {
+            f"channel_{i}": f"value_{i}" for i in range(100)
+        }
+
+        # Warm up
+        for _ in range(10):
+            checkpoint.to_json()
+
+        # Time the operations
+        start_time = time.time()
+        for _ in range(1000):
+            json_str = checkpoint.to_json()
+        end_time = time.time()
+
+        duration = end_time - start_time
+        ops_per_second = 1000 / duration
+
+        print(f"Checkpoint serialization: {ops_per_second:.0f} ops/sec")
+
+        # Should be reasonably fast
+        assert ops_per_second > 100  # At least 100 ops/sec
 
 
 def test_rust_channel_performance():
     """Test that demonstrates the performance improvements of Rust channels."""
     try:
         # Import the Rust implementation if available
-        from langgraph_rs.channels import LastValueChannel, TopicChannel
+        import langgraph_rs
         
         # Test LastValueChannel performance
         channel = LastValueChannel[str]()

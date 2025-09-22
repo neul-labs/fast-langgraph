@@ -138,9 +138,13 @@ impl<T: Clone + Send + Sync + Serialize + for<'de> Deserialize<'de>> TopicChanne
 
 impl<T: Clone + Send + Sync + Serialize + for<'de> Deserialize<'de>> Channel<Vec<T>, T> for TopicChannel<T> {
     fn get(&self) -> Result<&Vec<T>, LangGraphError> {
-        // This is a bit awkward - we're returning a reference to a Vec that we create on the fly
-        // In a real implementation, we might want to restructure this
-        unimplemented!("TopicChannel::get needs a better implementation")
+        // This is awkward but needed for compatibility - we can't easily return a Vec reference
+        // from a VecDeque. In a real implementation, we might store as Vec instead.
+        // For now, we'll use a thread-local storage approach or return an error suggesting
+        // use of get_values() instead
+        Err(LangGraphError::ChannelError(
+            "TopicChannel::get() is not supported. Use get_values() instead.".to_string()
+        ))
     }
     
     fn update(&mut self, values: Vec<T>) -> Result<bool, LangGraphError> {
