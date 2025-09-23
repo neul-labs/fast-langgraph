@@ -22,8 +22,25 @@ LangGraph Rust is a drop-in performance enhancement for [LangGraph](https://gith
 
 ### Installation
 
+#### From PyPI
+
 ```bash
 pip install langgraph-rs
+```
+
+#### Development Installation
+
+```bash
+# Install Poetry if you haven't already
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Clone the repository
+git clone https://github.com/langchain-ai/langgraph-rs
+cd langgraph-rs
+
+# Install dependencies and build
+poetry install
+poetry run maturin develop
 ```
 
 ### Usage

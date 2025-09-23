@@ -186,26 +186,26 @@ temp/
 # Assets
 assets/*
 
-# Other project-specific files
-chroma.sqlite3
-old_en.json
-crew_tasks_output.json
-.codesight
-test_flow.html
-crewairules.mdc
-plan.md
-conceptual_plan.md
-build_image
-chromadb-*.lock
+# Claude artifacts
+.claude/
+*.claude
 
-# rc-tests
-rc-tests/*
+# Profiling
+*.prof
+profile_output
+massif.out.*
+callgrind.out.*
+perf.data*
 
-# Pickle files
-*.pkl
+# Backup files
+*.bak
+*.backup
 
-# Compiled files
-*.o
-*.a
-*.so
-*.dylib
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Local configuration
+local_config.py
+.env.local

@@ -54,15 +54,17 @@ git remote add upstream https://github.com/langchain-ai/langgraph-rs.git
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 
-# Create Python virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install Poetry if not already installed
+curl -sSL https://install.python-poetry.org | python3 -
 
-# Install development dependencies
-pip install -r requirements-dev.txt
+# Install all dependencies including dev dependencies
+poetry install --with dev,docs,test
 
-# Install in development mode
-pip install -e .
+# Build the Rust extension
+poetry run maturin develop
+
+# Activate the virtual environment (optional, Poetry handles this)
+poetry shell
 ```
 
 ### 3. Verify Setup
@@ -72,10 +74,14 @@ pip install -e .
 cargo test --no-default-features
 
 # Run Python tests
-python -m pytest tests/
+poetry run pytest tests/
 
 # Run basic functionality test
-python examples/simple_test.py
+poetry run python examples/simple_test.py
+
+# Format and lint code
+poetry run black langgraph_rs/ tests/
+poetry run ruff check langgraph_rs/
 ```
 
 ## Making Changes
@@ -181,13 +187,22 @@ cargo test
 cargo test --no-default-features
 
 # Run Python tests
-python -m pytest tests/
+poetry run pytest tests/
 
 # Run with coverage
-python -m pytest --cov=langgraph_rs tests/
+poetry run pytest --cov=langgraph_rs tests/
+
+# Run specific test groups
+poetry run pytest -m "not slow"  # Skip slow tests
+poetry run pytest -m integration  # Only integration tests
 
 # Run benchmarks
 cargo bench
+
+# Run Python linting and formatting
+poetry run black langgraph_rs/ tests/
+poetry run ruff check langgraph_rs/
+poetry run mypy langgraph_rs/
 ```
 
 ### Test Requirements
@@ -371,16 +386,19 @@ cargo audit
 
 ```bash
 # Format code
-black langgraph_rs/ tests/ examples/
+poetry run black langgraph_rs/ tests/ examples/
 
-# Sort imports
-isort langgraph_rs/ tests/ examples/
+# Sort imports (handled by black with profile)
+poetry run isort langgraph_rs/ tests/ examples/
 
-# Lint code
-flake8 langgraph_rs/ tests/ examples/
+# Lint code with ruff (faster than flake8)
+poetry run ruff check langgraph_rs/ tests/ examples/
 
 # Type checking
-mypy langgraph_rs/
+poetry run mypy langgraph_rs/
+
+# Run all formatting and linting
+poetry run black . && poetry run ruff check . && poetry run mypy langgraph_rs/
 ```
 
 ### Documentation Style
