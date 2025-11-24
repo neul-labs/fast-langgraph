@@ -1,0 +1,31 @@
+# Include source files
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CLAUDE.md
+include Cargo.toml
+include Cargo.lock
+
+# Include Rust source
+recursive-include src *.rs
+
+# Include Python source
+recursive-include fast_langgraph *.py *.pyi
+include fast_langgraph/py.typed
+
+# Exclude development and build artifacts
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude .git*
+
+# Exclude test files from distribution
+prune tests
+prune examples
+prune docs
+prune benches
+prune htmlcov
+prune .pytest_cache
+prune target

@@ -4,7 +4,7 @@ Example usage of LangGraph Rust implementation
 """
 
 try:
-    from langgraph_rs import PregelExecutor
+    from fast_langgraph import PregelExecutor
     print("Successfully imported LangGraph Rust implementation")
     
     # Create a new executor
@@ -25,7 +25,7 @@ except ImportError as e:
     print("Falling back to Python implementation...")
     
     # Fallback to Python implementation
-    from langgraph_rs import PregelExecutor
+    from fast_langgraph import PregelExecutor
     executor = PregelExecutor()
     input_data = {"value": 42}
     result = executor.execute_graph(input_data)

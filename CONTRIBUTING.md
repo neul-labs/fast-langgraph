@@ -1,6 +1,6 @@
-# Contributing to LangGraph Rust
+# Contributing to Fast LangGraph
 
-We welcome contributions to LangGraph Rust! This document provides guidelines for contributing to the project.
+We welcome contributions to Fast LangGraph! This document provides guidelines for contributing to the project.
 
 ## Table of Contents
 
@@ -40,11 +40,11 @@ We welcome contributions in these areas:
 
 ```bash
 # Fork the repository on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/langgraph-rs.git
-cd langgraph-rs
+git clone https://github.com/YOUR_USERNAME/fast-langgraph.git
+cd fast-langgraph
 
 # Add upstream remote
-git remote add upstream https://github.com/langchain-ai/langgraph-rs.git
+git remote add upstream https://github.com/neul-labs/fast-langgraph.git
 ```
 
 ### 2. Set Up Development Environment

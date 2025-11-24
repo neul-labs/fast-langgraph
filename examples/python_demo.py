@@ -10,12 +10,12 @@ def demonstrate_rust_performance():
     
     try:
         # Try to import the Rust implementation
-        import langgraph_rs
+        import fast_langgraph
         
         print("✅ Successfully imported Rust implementation")
         
         # Create a GraphExecutor
-        executor = langgraph_rs.GraphExecutor()
+        executor = fast_langgraph.GraphExecutor()
         print("✅ Successfully created GraphExecutor")
         
         # Demonstrate basic usage

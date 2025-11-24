@@ -209,3 +209,6 @@ perf.data*
 # Local configuration
 local_config.py
 .env.local
+
+# LangGraph test directory
+.langgraph-test/langgraph/

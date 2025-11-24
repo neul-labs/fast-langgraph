@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LangGraph Rust is a high-performance Rust implementation of core LangGraph components that provides 10-100x performance improvements for graph execution, state management, and checkpointing operations. The project offers a drop-in replacement for Python LangGraph components while maintaining full API compatibility.
+Fast LangGraph is a high-performance Rust implementation of core LangGraph components that provides 10-100x performance improvements for graph execution, state management, and checkpointing operations. The project offers a drop-in replacement for Python LangGraph components while maintaining full API compatibility.
 
 ## Architecture
 
@@ -88,8 +88,8 @@ poetry run python examples/simple_test.py
 
 The project implements a "shim" pattern where Rust implementations can be transparently substituted for Python components:
 
-1. **Transparent Patching**: `langgraph_rs.shim.patch_langgraph()` replaces Python components with Rust equivalents
-2. **Direct Usage**: Import Rust types directly from `langgraph_rs`
+1. **Transparent Patching**: `fast_langgraph.shim.patch_langgraph()` replaces Python components with Rust equivalents
+2. **Direct Usage**: Import Rust types directly from `fast_langgraph`
 3. **Selective Enhancement**: Patch only specific components as needed
 
 ## Performance Considerations

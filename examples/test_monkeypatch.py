@@ -57,17 +57,17 @@ def test_with_patching():
     print("\n=== Testing WITH Rust Patching ===")
 
     try:
-        import langgraph_rs
+        import fast_langgraph
 
-        print(f"✓ Rust available: {langgraph_rs.is_rust_available()}")
+        print(f"✓ Rust available: {fast_langgraph.is_rust_available()}")
 
         # Apply the patch
-        success = langgraph_rs.shim.patch_langgraph()
+        success = fast_langgraph.shim.patch_langgraph()
         print(f"✓ Patch applied: {success}")
 
         if success:
             # Check patch status
-            status = langgraph_rs.shim.get_patch_status()
+            status = fast_langgraph.shim.get_patch_status()
             patched_components = [k for k, v in status.items() if v]
             print(f"✓ Patched components: {patched_components}")
 
@@ -105,15 +105,15 @@ def test_direct_usage():
     print("\n=== Testing Direct Rust Usage ===")
 
     try:
-        import langgraph_rs
+        import fast_langgraph
 
-        if not langgraph_rs.is_rust_available():
+        if not fast_langgraph.is_rust_available():
             print("✗ Rust implementations not available")
             print("Run 'pip install -e .' to build the Rust extension")
             return None
 
         # Use Rust implementations directly
-        channel = langgraph_rs.LastValue(str, "test_channel")
+        channel = fast_langgraph.LastValue(str, "test_channel")
         print(f"✓ Direct Rust channel: {type(channel)}")
 
         # Test functionality
@@ -163,8 +163,8 @@ def main():
 
     # Test unpatching
     try:
-        import langgraph_rs
-        unpatch_success = langgraph_rs.shim.unpatch_langgraph()
+        import fast_langgraph
+        unpatch_success = fast_langgraph.shim.unpatch_langgraph()
         print(f"✓ Unpatching successful: {unpatch_success}")
     except Exception as e:
         print(f"✗ Unpatching failed: {e}")

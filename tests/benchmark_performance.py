@@ -18,13 +18,13 @@ def benchmark_channels():
     print("-" * 40)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test LastValue channel performance
         print("Testing LastValueChannel performance...")
         
         # Create channel
-        channel = langgraph_rs.LastValue(str, "benchmark_channel")
+        channel = fast_langgraph.LastValue(str, "benchmark_channel")
         
         # Benchmark updates
         start_time = time.perf_counter_ns()
@@ -74,7 +74,7 @@ def benchmark_checkpoints():
     print("-" * 40)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test checkpoint creation
         print("Testing Checkpoint creation performance...")
@@ -83,7 +83,7 @@ def benchmark_checkpoints():
         iterations = 1000
         
         for i in range(iterations):
-            checkpoint = langgraph_rs.Checkpoint()
+            checkpoint = fast_langgraph.Checkpoint()
             checkpoint.v = 1
             checkpoint.id = f"checkpoint_{i}"
             checkpoint.ts = "2023-01-01T00:00:00Z"
@@ -95,7 +95,7 @@ def benchmark_checkpoints():
         print(f"  Average creation time: {avg_creation_time:.2f}ns ({iterations:,} iterations)")
         
         # Test JSON serialization
-        checkpoint = langgraph_rs.Checkpoint()
+        checkpoint = fast_langgraph.Checkpoint()
         checkpoint.v = 1
         checkpoint.id = "test_checkpoint"
         checkpoint.ts = "2023-01-01T00:00:00Z"
@@ -135,7 +135,7 @@ def benchmark_pregel():
     print("-" * 40)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test Pregel creation
         print("Testing Pregel creation performance...")
@@ -144,7 +144,7 @@ def benchmark_pregel():
         iterations = 1000
         
         for i in range(iterations):
-            pregel = langgraph_rs.Pregel(
+            pregel = fast_langgraph.Pregel(
                 nodes={},
                 output_channels="output",
                 input_channels="input"
@@ -156,7 +156,7 @@ def benchmark_pregel():
         print(f"  Average creation time: {avg_creation_time:.2f}ns ({iterations:,} iterations)")
         
         # Test invoke performance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -196,7 +196,7 @@ def benchmark_memory_usage():
     print("-" * 40)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test memory usage of channels
         print("Testing memory usage of channels...")
@@ -206,7 +206,7 @@ def benchmark_memory_usage():
         start_time = time.perf_counter_ns()
         
         for i in range(1000):
-            channel = langgraph_rs.LastValue(str, f"channel_{i}")
+            channel = fast_langgraph.LastValue(str, f"channel_{i}")
             channel.update([f"value_{i}"])
             channels.append(channel)
         
@@ -223,7 +223,7 @@ def benchmark_memory_usage():
         start_time = time.perf_counter_ns()
         
         for i in range(1000):
-            checkpoint = langgraph_rs.Checkpoint()
+            checkpoint = fast_langgraph.Checkpoint()
             checkpoint.v = 1
             checkpoint.id = f"checkpoint_{i}"
             checkpoint.ts = "2023-01-01T00:00:00Z"

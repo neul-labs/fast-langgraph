@@ -479,6 +479,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
+name = "fast-langgraph"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "criterion",
+ "flate2",
+ "num_cpus",
+ "petgraph",
+ "pyo3",
+ "rmp-serde",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "uuid",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -921,27 +942,6 @@ checksum = "0c0b063578492ceec17683ef2f8c5e89121fbd0b172cbc280635ab7567db2738"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "langgraph-rs"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "criterion",
- "flate2",
- "num_cpus",
- "petgraph",
- "pyo3",
- "rmp-serde",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror",
- "tokio",
- "tokio-test",
- "uuid",
 ]
 
 [[package]]

@@ -18,7 +18,7 @@ def test_shim_functionality():
     print("=== Testing Shim Functionality ===")
 
     try:
-        import langgraph_rs.shim as shim
+        import fast_langgraph.shim as shim
 
         print("✓ Successfully imported shim module")
 
@@ -50,11 +50,11 @@ def test_rust_availability():
     print("\n=== Testing Rust Availability ===")
 
     try:
-        import langgraph_rs
+        import fast_langgraph
 
-        print("✓ Successfully imported langgraph_rs")
+        print("✓ Successfully imported fast_langgraph")
 
-        rust_available = langgraph_rs.is_rust_available()
+        rust_available = fast_langgraph.is_rust_available()
         print(f"✓ Rust available: {rust_available}")
 
         if rust_available:
@@ -62,7 +62,7 @@ def test_rust_availability():
 
             # Test direct usage
             try:
-                channel = langgraph_rs.LastValue(str, "test")
+                channel = fast_langgraph.LastValue(str, "test")
                 print("✓ Can create LastValue channel")
 
                 channel.update(["test_value"])
@@ -72,7 +72,7 @@ def test_rust_availability():
                 print(f"✓ Can get value: {value}")
 
                 # Test checkpoint
-                checkpoint = langgraph_rs.Checkpoint()
+                checkpoint = fast_langgraph.Checkpoint()
                 print("✓ Can create checkpoint")
 
                 json_str = checkpoint.to_json()
@@ -89,7 +89,7 @@ def test_rust_availability():
             return True
 
     except ImportError as e:
-        print(f"✗ Could not import langgraph_rs: {e}")
+        print(f"✗ Could not import fast_langgraph: {e}")
         return False
 
 def test_performance_stub():
@@ -97,14 +97,14 @@ def test_performance_stub():
     print("\n=== Testing Performance (Stub) ===")
 
     try:
-        import langgraph_rs
+        import fast_langgraph
 
-        if not langgraph_rs.is_rust_available():
+        if not fast_langgraph.is_rust_available():
             print("ℹ Skipping performance test - Rust not available")
             return True
 
         # Basic performance test
-        channel = langgraph_rs.LastValue(str, "perf_test")
+        channel = fast_langgraph.LastValue(str, "perf_test")
 
         # Warm up
         for i in range(100):

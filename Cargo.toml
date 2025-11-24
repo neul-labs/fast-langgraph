@@ -1,8 +1,8 @@
 [package]
-name = "langgraph-rs"
+name = "fast-langgraph"
 version = "0.1.0"
 edition = "2021"
-description = "Rust implementation of LangGraph for performance enhancements"
+description = "High-performance Rust implementation of LangGraph components"
 license = "MIT"
 repository = "https://github.com/langchain-ai/langgraph"
 homepage = "https://github.com/langchain-ai/langgraph"
@@ -12,7 +12,7 @@ keywords = ["langgraph", "rust", "ai", "graph", "performance"]
 categories = ["science", "algorithms", "data-structures"]
 
 [lib]
-name = "langgraph_rs"
+name = "fast_langgraph"
 crate-type = ["cdylib", "rlib"]
 
 [[example]]

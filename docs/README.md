@@ -1,6 +1,6 @@
-# LangGraph Rust Documentation
+# Fast LangGraph Documentation
 
-Professional documentation for developers and enterprises using LangGraph Rust.
+Professional documentation for developers and enterprises using Fast LangGraph.
 
 ## 📖 Documentation
 
@@ -13,8 +13,8 @@ Professional documentation for developers and enterprises using LangGraph Rust.
 ## 🚀 Quick Start
 
 ```bash
-pip install langgraph-rs
-export LANGGRAPH_RS_AUTO_PATCH=1
+pip install fast-langgraph
+export FAST_LANGGRAPH_AUTO_PATCH=1
 python your_app.py
 ```
 

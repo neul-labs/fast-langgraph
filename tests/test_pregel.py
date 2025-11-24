@@ -13,10 +13,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'python'))
 def test_pregel_basic():
     """Test basic Pregel creation and functionality"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test Pregel creation with minimal parameters
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -24,7 +24,7 @@ def test_pregel_basic():
         print("✓ Pregel created successfully with minimal parameters")
         
         # Test Pregel creation with all parameters
-        pregel_full = langgraph_rs.Pregel(
+        pregel_full = fast_langgraph.Pregel(
             nodes={"test": None},
             channels={"test": None},
             auto_validate=True,
@@ -69,10 +69,10 @@ def test_pregel_basic():
 def test_pregel_invoke():
     """Test Pregel invoke method"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create a Pregel instance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -116,10 +116,10 @@ def test_pregel_invoke():
 def test_pregel_stream():
     """Test Pregel stream method"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create a Pregel instance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -156,10 +156,10 @@ def test_pregel_stream():
 def test_pregel_ainvoke():
     """Test Pregel ainvoke method"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create a Pregel instance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -183,10 +183,10 @@ def test_pregel_ainvoke():
 def test_pregel_astream():
     """Test Pregel astream method"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create a Pregel instance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -207,10 +207,10 @@ def test_pregel_astream():
 def test_pregel_api_compatibility():
     """Test that Pregel API is compatible with Python LangGraph"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create a Pregel instance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -248,10 +248,10 @@ def test_pregel_api_compatibility():
 def test_async_methods():
     """Test async methods existence and basic functionality"""
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create a Pregel instance
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"

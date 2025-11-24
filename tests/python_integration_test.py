@@ -7,11 +7,11 @@ def test_rust_integration():
     """Test that the Rust implementation can be imported and used"""
     try:
         # Try to import the Rust implementation
-        import langgraph_rs
-        print("✅ Successfully imported langgraph_rs")
+        import fast_langgraph
+        print("✅ Successfully imported fast_langgraph")
         
         # Try to create a GraphExecutor
-        executor = langgraph_rs.GraphExecutor()
+        executor = fast_langgraph.GraphExecutor()
         print("✅ Successfully created GraphExecutor")
         
         # Try to use the executor
@@ -21,10 +21,10 @@ def test_rust_integration():
         return True
         
     except ImportError as e:
-        print(f"❌ Failed to import langgraph_rs: {e}")
+        print(f"❌ Failed to import fast_langgraph: {e}")
         return False
     except Exception as e:
-        print(f"❌ Error using langgraph_rs: {e}")
+        print(f"❌ Error using fast_langgraph: {e}")
         return False
 
 def test_python_fallback():

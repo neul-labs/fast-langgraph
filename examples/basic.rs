@@ -1,7 +1,7 @@
 //! Example usage of LangGraph Rust implementation
 
-use langgraph_rs::channels::LastValueChannel;
-use langgraph_rs::pregel::{PregelExecutor, PregelNode};
+use fast_langgraph::channels::LastValueChannel;
+use fast_langgraph::pregel::{PregelExecutor, PregelNode};
 use std::sync::Arc;
 
 fn main() {

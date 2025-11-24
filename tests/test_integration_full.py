@@ -16,17 +16,17 @@ def test_direct_usage():
     print("-" * 50)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test channel creation
         print("✓ Creating BaseChannel...")
-        base_channel = langgraph_rs.BaseChannel(str, "test_channel")
+        base_channel = fast_langgraph.BaseChannel(str, "test_channel")
         print(f"  Type: {base_channel.typ}")
         print(f"  Key: {base_channel.key}")
         
         # Test LastValue channel
         print("✓ Creating LastValue channel...")
-        last_value = langgraph_rs.LastValue(str, "last_value_channel")
+        last_value = fast_langgraph.LastValue(str, "last_value_channel")
         
         # Test channel operations
         print("✓ Testing channel operations...")
@@ -41,7 +41,7 @@ def test_direct_usage():
         
         # Test checkpoint creation
         print("✓ Creating Checkpoint...")
-        checkpoint = langgraph_rs.Checkpoint()
+        checkpoint = fast_langgraph.Checkpoint()
         checkpoint.v = 1
         checkpoint.id = "test_checkpoint"
         checkpoint.ts = "2023-01-01T00:00:00Z"
@@ -55,7 +55,7 @@ def test_direct_usage():
         
         # Test Pregel creation
         print("✓ Creating Pregel executor...")
-        pregel = langgraph_rs.Pregel(
+        pregel = fast_langgraph.Pregel(
             nodes={},
             output_channels="output",
             input_channels="input"
@@ -87,11 +87,11 @@ def test_monkeypatching():
     print("-" * 50)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test that shim module is available through direct import
         print("✓ Testing shim module availability...")
-        import langgraph_rs.shim as shim_module
+        import fast_langgraph.shim as shim_module
         print("  Shim module imported successfully")
         
         # Test that patch function exists
@@ -106,10 +106,10 @@ def test_monkeypatching():
         
         # Test that Rust classes are available
         print("✓ Testing Rust class availability...")
-        assert hasattr(langgraph_rs, 'BaseChannel')
-        assert hasattr(langgraph_rs, 'LastValue')
-        assert hasattr(langgraph_rs, 'Checkpoint')
-        assert hasattr(langgraph_rs, 'Pregel')
+        assert hasattr(fast_langgraph, 'BaseChannel')
+        assert hasattr(fast_langgraph, 'LastValue')
+        assert hasattr(fast_langgraph, 'Checkpoint')
+        assert hasattr(fast_langgraph, 'Pregel')
         print("  All Rust classes available")
         
         return True
@@ -126,13 +126,13 @@ def test_api_compatibility():
     print("-" * 50)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Test that all expected methods exist
         print("✓ Testing method availability...")
         
         # Channel methods
-        channel = langgraph_rs.LastValue(str, "test")
+        channel = fast_langgraph.LastValue(str, "test")
         expected_methods = ['update', 'get', 'is_available', 'checkpoint', 'copy']
         for method in expected_methods:
             assert hasattr(channel, method)
@@ -140,7 +140,7 @@ def test_api_compatibility():
         print("  Channel methods available")
         
         # Checkpoint methods
-        checkpoint = langgraph_rs.Checkpoint()
+        checkpoint = fast_langgraph.Checkpoint()
         expected_methods = ['to_json', 'from_json', 'copy']  # Updated to match actual methods
         for method in expected_methods:
             if hasattr(checkpoint, method):
@@ -148,7 +148,7 @@ def test_api_compatibility():
         print("  Checkpoint methods available")
         
         # Pregel methods
-        pregel = langgraph_rs.Pregel(nodes={}, output_channels="output", input_channels="input")
+        pregel = fast_langgraph.Pregel(nodes={}, output_channels="output", input_channels="input")
         expected_methods = ['invoke', 'stream', 'ainvoke', 'astream']
         for method in expected_methods:
             assert hasattr(pregel, method)
@@ -179,12 +179,12 @@ def test_performance_characteristics():
     print("-" * 50)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         import time
         
         # Test fast channel operations
         print("✓ Testing fast channel operations...")
-        channel = langgraph_rs.LastValue(str, "perf_test")
+        channel = fast_langgraph.LastValue(str, "perf_test")
         
         # Time multiple updates
         start = time.perf_counter_ns()
@@ -224,7 +224,7 @@ def test_memory_efficiency():
     print("-" * 50)
     
     try:
-        import langgraph_rs
+        import fast_langgraph
         
         # Create many objects to test memory efficiency
         print("✓ Creating multiple objects...")
@@ -235,12 +235,12 @@ def test_memory_efficiency():
         # Create 100 channels and checkpoints
         for i in range(100):
             # Channels
-            channel = langgraph_rs.LastValue(str, f"channel_{i}")
+            channel = fast_langgraph.LastValue(str, f"channel_{i}")
             channel.update([f"value_{i}"])
             channels.append(channel)
             
             # Checkpoints
-            checkpoint = langgraph_rs.Checkpoint()
+            checkpoint = fast_langgraph.Checkpoint()
             checkpoint.v = 1
             checkpoint.id = f"checkpoint_{i}"
             checkpoint.ts = "2023-01-01T00:00:00Z"

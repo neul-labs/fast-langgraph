@@ -14,13 +14,13 @@ def test_channels():
     """Test that we can import and use the channel classes"""
     try:
         # Try to import the compiled module directly
-        import langgraph_rs
+        import fast_langgraph
         
-        print("✓ Successfully imported langgraph_rs")
+        print("✓ Successfully imported fast_langgraph")
         
         # Test BaseChannel
         try:
-            base_channel = langgraph_rs.BaseChannel(str, "test")
+            base_channel = fast_langgraph.BaseChannel(str, "test")
             print("✓ BaseChannel created successfully")
             print(f"  Type: {base_channel.typ}")
             print(f"  Key: {base_channel.key}")
@@ -30,7 +30,7 @@ def test_channels():
             
         # Test LastValue
         try:
-            last_value = langgraph_rs.LastValue(str, "test_last")
+            last_value = fast_langgraph.LastValue(str, "test_last")
             print("✓ LastValue created successfully")
             
             # Test update
@@ -52,7 +52,7 @@ def test_channels():
         return True
         
     except ImportError as e:
-        print(f"✗ Failed to import langgraph_rs: {e}")
+        print(f"✗ Failed to import fast_langgraph: {e}")
         return False
     except Exception as e:
         print(f"✗ Unexpected error: {e}")
@@ -62,13 +62,13 @@ def test_checkpoints():
     """Test that we can import and use the checkpoint classes"""
     try:
         # Try to import the compiled module directly
-        import langgraph_rs
+        import fast_langgraph
         
-        print("✓ Successfully imported langgraph_rs for checkpoints")
+        print("✓ Successfully imported fast_langgraph for checkpoints")
         
         # Test Checkpoint
         try:
-            checkpoint = langgraph_rs.Checkpoint()
+            checkpoint = fast_langgraph.Checkpoint()
             checkpoint.v = 1
             checkpoint.id = "test_id"
             checkpoint.ts = "2023-01-01T00:00:00Z"
@@ -105,7 +105,7 @@ def test_checkpoints():
         return True
         
     except ImportError as e:
-        print(f"✗ Failed to import langgraph_rs: {e}")
+        print(f"✗ Failed to import fast_langgraph: {e}")
         return False
     except Exception as e:
         print(f"✗ Unexpected error: {e}")
@@ -115,14 +115,14 @@ def test_pregel():
     """Test that we can import and use the Pregel class"""
     try:
         # Try to import the compiled module directly
-        import langgraph_rs
+        import fast_langgraph
         
-        print("✓ Successfully imported langgraph_rs for Pregel")
+        print("✓ Successfully imported fast_langgraph for Pregel")
         
         # Test Pregel
         try:
             # Create a simple Pregel instance
-            pregel = langgraph_rs.Pregel(
+            pregel = fast_langgraph.Pregel(
                 nodes={},
                 output_channels="output",
                 input_channels="input"
@@ -151,7 +151,7 @@ def test_pregel():
         return True
         
     except ImportError as e:
-        print(f"✗ Failed to import langgraph_rs: {e}")
+        print(f"✗ Failed to import fast_langgraph: {e}")
         return False
     except Exception as e:
         print(f"✗ Unexpected error: {e}")

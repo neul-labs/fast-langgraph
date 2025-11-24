@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'python'))
 def test_base_channel():
     """Test the BaseChannel implementation"""
     try:
-        from langgraph_rs import BaseChannel
+        from fast_langgraph import BaseChannel
         
         # Create a new BaseChannel
         channel = BaseChannel(str, "test_channel")
@@ -54,7 +54,7 @@ def test_base_channel():
 def test_last_value():
     """Test the LastValue implementation"""
     try:
-        from langgraph_rs import LastValue
+        from fast_langgraph import LastValue
         
         # Create a new LastValue channel
         channel = LastValue(str, "test_last_value")

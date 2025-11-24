@@ -11,23 +11,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'python'))
 def test_shim_import():
     """Test that the shim module can be imported"""
     try:
-        import langgraph_rs.shim
-        print("✓ Successfully imported langgraph_rs.shim")
+        import fast_langgraph.shim
+        print("✓ Successfully imported fast_langgraph.shim")
         return True
     except ImportError as e:
-        print(f"✗ Failed to import langgraph_rs.shim: {e}")
+        print(f"✗ Failed to import fast_langgraph.shim: {e}")
         return False
 
 def test_patch_function():
     """Test that the patch function exists and is callable"""
     try:
-        import langgraph_rs.shim
-        assert hasattr(langgraph_rs.shim, 'patch_langgraph')
-        assert callable(langgraph_rs.shim.patch_langgraph)
+        import fast_langgraph.shim
+        assert hasattr(fast_langgraph.shim, 'patch_langgraph')
+        assert callable(fast_langgraph.shim.patch_langgraph)
         print("✓ patch_langgraph function exists and is callable")
         
-        assert hasattr(langgraph_rs.shim, 'unpatch_langgraph')
-        assert callable(langgraph_rs.shim.unpatch_langgraph)
+        assert hasattr(fast_langgraph.shim, 'unpatch_langgraph')
+        assert callable(fast_langgraph.shim.unpatch_langgraph)
         print("✓ unpatch_langgraph function exists and is callable")
         
         return True
@@ -40,7 +40,7 @@ def test_auto_patch_env_var():
     try:
         # This test just verifies the code structure, not actual auto-patching
         # since we don't want to modify the environment during testing
-        import langgraph_rs.shim
+        import fast_langgraph.shim
         
         # Check that the code references the environment variable
         # We can't easily test the actual auto-patching without potentially
@@ -54,17 +54,17 @@ def test_auto_patch_env_var():
 def test_rust_backend_availability():
     """Test that the Rust backend classes are available"""
     try:
-        import langgraph_rs.shim
+        import fast_langgraph.shim
         
         # Check if Rust backend is available
-        if langgraph_rs.shim._has_rust_backend:
+        if fast_langgraph.shim._has_rust_backend:
             print("✓ Rust backend is available")
             
             # Check that Rust classes are accessible
-            assert hasattr(langgraph_rs.shim, 'RustPregelExecutor')
-            assert hasattr(langgraph_rs.shim, 'RustChannel')
-            assert hasattr(langgraph_rs.shim, 'RustLastValueChannel')
-            assert hasattr(langgraph_rs.shim, 'RustCheckpoint')
+            assert hasattr(fast_langgraph.shim, 'RustPregelExecutor')
+            assert hasattr(fast_langgraph.shim, 'RustChannel')
+            assert hasattr(fast_langgraph.shim, 'RustLastValueChannel')
+            assert hasattr(fast_langgraph.shim, 'RustCheckpoint')
             print("✓ All Rust backend classes are accessible")
         else:
             print("⚠ Rust backend is not available (expected in some environments)")

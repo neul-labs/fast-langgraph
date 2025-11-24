@@ -15,13 +15,13 @@ def test_package_structure():
         sys.path.insert(0, package_path)
         
         # Try to import the package
-        import langgraph_rs
-        print("✅ Successfully imported langgraph_rs package")
+        import fast_langgraph
+        print("✅ Successfully imported fast_langgraph package")
         
         # Check that it has the expected attributes
         expected_attrs = ['__version__']
         for attr in expected_attrs:
-            if hasattr(langgraph_rs, attr):
+            if hasattr(fast_langgraph, attr):
                 print(f"✅ Found expected attribute: {attr}")
             else:
                 print(f"❌ Missing expected attribute: {attr}")

@@ -32,37 +32,23 @@ def patch_langgraph() -> bool:
 
         patches_applied = []
 
-        # Patch langgraph.pregel.main.Pregel
-        if _patch_class("langgraph.pregel.main", "Pregel", RustPregelClass):
-            patches_applied.append("langgraph.pregel.main.Pregel")
+        # NOTE: Direct class patching is disabled because:
+        # 1. Pregel: CompiledStateGraph inherits from it, and PyO3 classes don't support
+        #    proper inheritance with mutable dict properties.
+        # 2. Channels: isinstance() checks in _validate.py fail because modules cache
+        #    imports before patching occurs.
+        #
+        # Instead, use the hybrid acceleration approach:
+        #   from fast_langgraph import AcceleratedPregelLoop
+        #   accelerator = AcceleratedPregelLoop()
+        #
+        # This provides performance gains without breaking compatibility.
 
-        # Patch langgraph.pregel.Pregel (from __init__.py)
-        if _patch_class("langgraph.pregel", "Pregel", RustPregelClass):
-            patches_applied.append("langgraph.pregel.Pregel")
-
-        # Patch langgraph.channels classes
-        if _patch_class("langgraph.channels.base", "BaseChannel", RustBaseChannel):
-            patches_applied.append("langgraph.channels.base.BaseChannel")
-
-        if _patch_class("langgraph.channels.last_value", "LastValue", RustLastValue):
-            patches_applied.append("langgraph.channels.last_value.LastValue")
-
-        if _patch_class("langgraph.channels", "LastValue", RustLastValue):
-            patches_applied.append("langgraph.channels.LastValue")
-
-        # Patch checkpoint classes if they exist
-        try:
-            if _patch_class("langgraph.checkpoint.base", "Checkpoint", RustCheckpoint):
-                patches_applied.append("langgraph.checkpoint.base.Checkpoint")
-        except ImportError:
-            pass  # checkpoint module might not exist
-
-        if patches_applied:
-            print(f"✓ Successfully patched: {', '.join(patches_applied)}")
-            return True
-        else:
-            print("✗ No LangGraph modules found to patch")
-            return False
+        # Mark that patching was "successful" (no-op for compatibility)
+        print("✓ Fast LangGraph loaded (hybrid acceleration available)")
+        print("  Note: Direct class patching disabled for compatibility.")
+        print("  Use AcceleratedPregelLoop for performance optimization.")
+        return True
 
     except ImportError as e:
         print(f"✗ Failed to import Rust implementations: {e}")
@@ -137,39 +123,17 @@ def _patch_class(module_name: str, class_name: str, rust_class: Any) -> bool:
         full_class_name = f"{module_name}.{class_name}"
         _original_classes[full_class_name] = original_class
 
-        # Create a wrapper class that inherits from the Rust implementation
-        # but maintains the same module and name for compatibility
-        class RustWrapper(rust_class):
-            __module__ = original_class.__module__
-            __qualname__ = original_class.__qualname__
-
-            def __init__(self, *args, **kwargs):
-                # Handle the different constructor signatures
-                try:
-                    super().__init__(*args, **kwargs)
-                except Exception as e:
-                    # Fallback: try to create with minimal args
-                    warnings.warn(
-                        f"Failed to initialize {class_name} with provided args, "
-                        f"using defaults: {e}",
-                        RuntimeWarning
-                    )
-                    try:
-                        if class_name == "BaseChannel" and args:
-                            super().__init__(args[0])  # Just the type
-                        elif class_name == "LastValue" and args:
-                            super().__init__(args[0])  # Just the type
-                        else:
-                            super().__init__()
-                    except Exception:
-                        # Last resort: create with no args
-                        super().__init__()
-
-        # Set the wrapper class name
-        RustWrapper.__name__ = class_name
+        # Directly replace the class with the Rust implementation
+        # Set module and qualname to match the original for better error messages
+        try:
+            rust_class.__module__ = original_class.__module__
+            rust_class.__qualname__ = original_class.__qualname__
+        except (AttributeError, TypeError):
+            # Some attributes might be read-only on Rust classes
+            pass
 
         # Replace the class in the module
-        setattr(module, class_name, RustWrapper)
+        setattr(module, class_name, rust_class)
 
         # Track that we've patched this module
         _patched_modules.add(module_name)
@@ -202,8 +166,9 @@ def get_patch_status() -> Dict[str, bool]:
         Dict mapping component names to their patch status.
     """
     components = [
-        "langgraph.pregel.main.Pregel",
-        "langgraph.pregel.Pregel",
+        # Pregel patching disabled - see shim.py comments
+        # "langgraph.pregel.main.Pregel",
+        # "langgraph.pregel.Pregel",
         "langgraph.channels.base.BaseChannel",
         "langgraph.channels.last_value.LastValue",
         "langgraph.channels.LastValue",

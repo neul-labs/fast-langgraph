@@ -1,0 +1,170 @@
+name: LangGraph Compatibility Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run daily at 2 AM UTC to catch breaking changes in LangGraph
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      langgraph_branch:
+        description: 'LangGraph branch to test against'
+        required: false
+        default: 'main'
+
+env:
+  RUST_BACKTRACE: 1
+
+jobs:
+  compatibility-test:
+    name: Test against LangGraph (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        exclude:
+          # Reduce matrix size - only test all Python versions on Ubuntu
+          - os: macos-latest
+            python-version: '3.9'
+          - os: macos-latest
+            python-version: '3.10'
+          - os: windows-latest
+            python-version: '3.9'
+          - os: windows-latest
+            python-version: '3.10'
+
+    steps:
+      - name: Checkout Fast LangGraph
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,build
+
+      - name: Run Rust tests
+        run: cargo test --verbose
+
+      - name: Build Fast LangGraph
+        run: poetry run maturin develop --release
+
+      - name: Run Python unit tests
+        run: poetry run pytest tests/ -v
+
+      - name: Run compatibility tests
+        env:
+          LANGGRAPH_BRANCH: ${{ github.event.inputs.langgraph_branch || 'main' }}
+        run: |
+          python scripts/test_compatibility.py --branch $LANGGRAPH_BRANCH -v
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            .langgraph-test/
+            htmlcov/
+          retention-days: 7
+
+  compatibility-report:
+    name: Generate Compatibility Report
+    needs: compatibility-test
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v3
+        with:
+          path: test-results
+
+      - name: Generate report
+        run: |
+          echo "# LangGraph Compatibility Test Results" > report.md
+          echo "" >> report.md
+          echo "**Date:** $(date)" >> report.md
+          echo "**LangGraph Branch:** ${{ github.event.inputs.langgraph_branch || 'main' }}" >> report.md
+          echo "" >> report.md
+
+          if [ "${{ needs.compatibility-test.result }}" == "success" ]; then
+            echo "✅ **Status:** All compatibility tests passed!" >> report.md
+          else
+            echo "❌ **Status:** Some compatibility tests failed" >> report.md
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('report.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+  notify-failure:
+    name: Notify on Failure
+    needs: compatibility-test
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'schedule'
+
+    steps:
+      - name: Create Issue on Failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Scheduled LangGraph Compatibility Test Failed',
+              body: `The scheduled compatibility test failed on ${new Date().toISOString()}.
+
+              Please check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.
+
+              This may indicate:
+              - Breaking changes in LangGraph
+              - Issues with Fast LangGraph implementation
+              - Test environment problems
+
+              cc: @maintainers`,
+              labels: ['bug', 'compatibility', 'automated']
+            });

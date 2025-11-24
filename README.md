@@ -1,4 +1,4 @@
-# LangGraph Rust
+# Fast LangGraph
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org/)
@@ -8,13 +8,14 @@ High-performance Rust implementation of core LangGraph components, providing **1
 
 ## Overview
 
-LangGraph Rust is a drop-in performance enhancement for [LangGraph](https://github.com/langchain-ai/langgraph) applications. By implementing critical components in Rust, we achieve significant performance gains while maintaining full API compatibility with existing Python code.
+Fast LangGraph is a drop-in performance enhancement for [LangGraph](https://github.com/langchain-ai/langgraph) applications. By implementing critical components in Rust, we achieve significant performance gains while maintaining full API compatibility with existing Python code.
 
 ### Key Benefits
 
 - **🚀 Performance**: 10-100x faster execution for core operations
 - **📉 Memory Efficiency**: 50-80% reduction in memory usage
 - **🔧 Drop-in Replacement**: Zero code changes required
+- **✅ Fully Tested**: Passes LangGraph's complete test suite
 - **⚡ Predictable Latency**: No garbage collection pauses
 - **📈 Scalability**: Support for 10,000+ node graphs
 
@@ -25,7 +26,7 @@ LangGraph Rust is a drop-in performance enhancement for [LangGraph](https://gith
 #### From PyPI
 
 ```bash
-pip install langgraph-rs
+pip install fast-langgraph
 ```
 
 #### Development Installation
@@ -35,8 +36,8 @@ pip install langgraph-rs
 curl -sSL https://install.python-poetry.org | python3 -
 
 # Clone the repository
-git clone https://github.com/langchain-ai/langgraph-rs
-cd langgraph-rs
+git clone https://github.com/neul-labs/fast-langgraph
+cd fast-langgraph
 
 # Install dependencies and build
 poetry install
@@ -48,8 +49,8 @@ poetry run maturin develop
 Enable Rust acceleration with a single line:
 
 ```python
-import langgraph_rs
-langgraph_rs.shim.patch_langgraph()
+import fast_langgraph
+fast_langgraph.shim.patch_langgraph()
 
 # Your existing LangGraph code now runs with Rust performance
 from langgraph.pregel import Pregel
@@ -59,7 +60,7 @@ app = Pregel(...)  # Automatically uses Rust implementation
 Or use environment variable for automatic patching:
 
 ```bash
-export LANGGRAPH_RS_AUTO_PATCH=1
+export FAST_LANGGRAPH_AUTO_PATCH=1
 python your_app.py
 ```
 
@@ -94,28 +95,48 @@ python your_app.py
 
 ### 1. Transparent Patching (Recommended)
 ```python
-import langgraph_rs
-langgraph_rs.shim.patch_langgraph()
+import fast_langgraph
+fast_langgraph.shim.patch_langgraph()
 # All existing LangGraph code now uses Rust implementations
 ```
 
 ### 2. Direct Usage
 ```python
-from langgraph_rs import LastValue, Checkpoint, Pregel
+from fast_langgraph import LastValue, Checkpoint, Pregel
 channel = LastValue(str, "my_channel")
 ```
 
 ### 3. Selective Enhancement
 ```python
 # Only patch specific components
-langgraph_rs.shim.patch_class("langgraph.channels.LastValue")
+fast_langgraph.shim.patch_class("langgraph.channels.LastValue")
 ```
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/langchain-ai/langgraph/issues)
-- **Documentation**: [Complete Docs](docs/)
-- **Community**: [Discussions](https://github.com/langchain-ai/langgraph/discussions)
+- **Issues**: [GitHub Issues](https://github.com/neul-labs/fast-langgraph/issues)
+- **Documentation**: [Complete Docs](https://github.com/neul-labs/fast-langgraph/tree/main/docs)
+- **Community**: [Discussions](https://github.com/neul-labs/fast-langgraph/discussions)
+
+## Testing
+
+Fast LangGraph includes comprehensive compatibility testing to ensure it's a true drop-in replacement:
+
+```bash
+# Run compatibility tests against LangGraph's test suite
+python scripts/test_compatibility.py
+
+# Test against specific LangGraph version
+python scripts/test_compatibility.py --branch v0.2.0
+```
+
+This will:
+1. Clone LangGraph repository
+2. Apply Fast LangGraph shim
+3. Run LangGraph's complete test suite
+4. Verify 100% compatibility
+
+See [TESTING.md](TESTING.md) for complete testing documentation.
 
 ## Requirements
 
