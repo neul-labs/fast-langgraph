@@ -46,23 +46,34 @@ poetry run maturin develop
 
 ### Usage
 
-Enable Rust acceleration with a single line:
+#### Hybrid Acceleration (Current)
+
+Fast LangGraph provides high-performance Rust components for explicit acceleration:
 
 ```python
-import fast_langgraph
-fast_langgraph.shim.patch_langgraph()
+from fast_langgraph import AcceleratedPregelLoop
 
-# Your existing LangGraph code now runs with Rust performance
-from langgraph.pregel import Pregel
-app = Pregel(...)  # Automatically uses Rust implementation
+# Create accelerated execution loop
+loop = AcceleratedPregelLoop(max_steps=25)
+
+# Initialize with your graph's channels and nodes
+loop.initialize(channels=my_channels, nodes=my_nodes)
+
+# Execute steps with Rust performance
+triggered_nodes, has_more = loop.execute_step(writes)
 ```
 
-Or use environment variable for automatic patching:
+#### Direct Component Usage
 
-```bash
-export FAST_LANGGRAPH_AUTO_PATCH=1
-python your_app.py
+```python
+from fast_langgraph import ChannelManager, TaskScheduler, PregelAccelerator
+
+# Use individual accelerated components
+channel_mgr = ChannelManager()
+channel_mgr.register_channel("state", {"type": "LastValue"})
 ```
+
+**Note**: Direct class patching is currently disabled due to PyO3 inheritance limitations with isinstance() checks. Use hybrid acceleration components explicitly for optimal performance.
 
 ## Performance Results
 
@@ -93,23 +104,32 @@ python your_app.py
 
 ## Integration Patterns
 
-### 1. Transparent Patching (Recommended)
+### 1. Hybrid Acceleration (Recommended)
 ```python
-import fast_langgraph
-fast_langgraph.shim.patch_langgraph()
-# All existing LangGraph code now uses Rust implementations
+from fast_langgraph import AcceleratedPregelLoop
+
+# Wrap your existing Pregel loop with Rust acceleration
+loop = AcceleratedPregelLoop(max_steps=25)
+loop.initialize(channels, nodes)
 ```
 
-### 2. Direct Usage
+### 2. Direct Component Usage
 ```python
-from fast_langgraph import LastValue, Checkpoint, Pregel
-channel = LastValue(str, "my_channel")
+from fast_langgraph import ChannelManager, TaskScheduler, PregelAccelerator
+
+# Use specific accelerated components
+channel_mgr = ChannelManager()
+task_scheduler = TaskScheduler()
+accelerator = PregelAccelerator(max_steps=25)
 ```
 
-### 3. Selective Enhancement
+### 3. Core Rust Types
 ```python
-# Only patch specific components
-fast_langgraph.shim.patch_class("langgraph.channels.LastValue")
+from fast_langgraph import Channel, Checkpoint
+
+# Use fundamental Rust-based data structures
+channel = Channel.last_value("my_channel")
+checkpoint = Checkpoint()
 ```
 
 ## Support
