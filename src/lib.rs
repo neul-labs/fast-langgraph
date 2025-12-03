@@ -16,6 +16,12 @@ pub mod channel_manager;
 pub mod stream_output;
 pub mod send;
 pub mod conditional;
+pub mod fast_channels;
+pub mod rust_checkpoint;
+pub mod checkpoint_sqlite;
+pub mod llm_cache;
+pub mod state_merge;
+pub mod function_cache;
 // pub mod state;  // Will be created in Phase 2
 
 // Hybrid acceleration module

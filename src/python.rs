@@ -1333,6 +1333,24 @@ fn fast_langgraph(_py: Python, m: &PyModule) -> PyResult<()> {
     // Register hybrid acceleration classes
     crate::hybrid::register_hybrid_classes(m)?;
 
+    // Register fast channel types
+    crate::fast_channels::register_fast_channels(_py, m)?;
+
+    // Register rust checkpoint
+    crate::rust_checkpoint::register_checkpoint(_py, m)?;
+
+    // Register SQLite checkpoint
+    crate::checkpoint_sqlite::register_sqlite_checkpoint(_py, m)?;
+
+    // Register LLM cache
+    crate::llm_cache::register_llm_cache(_py, m)?;
+
+    // Register state merge operations
+    crate::state_merge::register_state_merge(_py, m)?;
+
+    // Register function cache
+    crate::function_cache::register_function_cache(_py, m)?;
+
     Ok(())
 }
 

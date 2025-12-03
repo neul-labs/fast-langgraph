@@ -29,7 +29,32 @@ if _rust_available:
         ChannelManager,
         TaskScheduler,
         PregelAccelerator,
+        # Fast channel types
+        RustLastValue,
+        FastChannelUpdater,
+        # Fast checkpoint
+        RustCheckpointer,
+        RustSQLiteCheckpointer,
+        # LLM cache
+        RustLLMCache,
+        RustSQLiteLLMCache,
+        # State merge operations
+        merge_dicts,
+        deep_merge_dicts,
+        merge_many_dicts,
+        update_dict_inplace,
+        merge_lists,
+        apply_writes_batch,
+        states_equal,
+        get_state_diff,
+        langgraph_state_update,
+        # Function caching (low-level)
+        RustFunctionCache,
+        RustTTLCache,
     )
+
+    # Import Python-friendly cached decorator
+    from .cache_decorator import cached
 
     # Legacy alias
     PregelExecutor = GraphExecutor
@@ -64,6 +89,17 @@ from . import shim
 
 # Import accelerator module
 from . import accelerator
+
+# Import profiler module
+from . import profiler
+from .profiler import (
+    GraphProfiler,
+    NodeProfiler,
+    PerformanceRecommendations,
+    create_profiler,
+    create_node_profiler,
+    profile_function,
+)
 from .accelerator import (
     AcceleratedPregelLoop,
     is_accelerator_available,
@@ -85,6 +121,37 @@ __all__ = [
     "ChannelManager",
     "TaskScheduler",
     "PregelAccelerator",
+    # Fast channel types
+    "RustLastValue",
+    "FastChannelUpdater",
+    # Fast checkpoint
+    "RustCheckpointer",
+    "RustSQLiteCheckpointer",
+    # LLM cache
+    "RustLLMCache",
+    "RustSQLiteLLMCache",
+    # State merge operations
+    "merge_dicts",
+    "deep_merge_dicts",
+    "merge_many_dicts",
+    "update_dict_inplace",
+    "merge_lists",
+    "apply_writes_batch",
+    "states_equal",
+    "get_state_diff",
+    "langgraph_state_update",
+    # Function caching
+    "RustFunctionCache",
+    "cached",
+    "RustTTLCache",
+    # Profiling
+    "profiler",
+    "GraphProfiler",
+    "NodeProfiler",
+    "PerformanceRecommendations",
+    "create_profiler",
+    "create_node_profiler",
+    "profile_function",
     "shim",
     "is_rust_available",
     # Accelerator module

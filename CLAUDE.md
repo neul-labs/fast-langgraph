@@ -44,7 +44,7 @@ The project uses a hybrid Rust/Python architecture where performance-critical co
 cargo build
 
 # Build Python extension for development
-poetry run maturin develop
+uv run maturin develop
 
 # Build release version
 cargo build --release
@@ -59,19 +59,19 @@ cargo test
 cargo test --no-default-features
 
 # Run Python tests
-poetry run pytest tests/
+uv run pytest tests/
 
 # Run with coverage
-poetry run pytest --cov=fast_langgraph tests/
+uv run pytest --cov=fast_langgraph tests/
 
 # Run LangGraph compatibility tests
 python scripts/test_compatibility.py --keep
 
 # Run integration tests only
-poetry run pytest -m integration
+uv run pytest -m integration
 
 # Skip slow tests
-poetry run pytest -m "not slow"
+uv run pytest -m "not slow"
 
 # Run benchmarks
 cargo bench
@@ -84,24 +84,24 @@ cargo fmt
 cargo clippy -- -D warnings
 
 # Python formatting and linting
-poetry run black fast_langgraph/ tests/ examples/
-poetry run ruff check fast_langgraph/ tests/ examples/
-poetry run mypy fast_langgraph/
+uv run black fast_langgraph/ tests/ examples/
+uv run ruff check fast_langgraph/ tests/ examples/
+uv run mypy fast_langgraph/
 
 # Run all formatting and linting
-poetry run black . && poetry run ruff check . && poetry run mypy fast_langgraph/
+uv run black . && uv run ruff check . && uv run mypy fast_langgraph/
 ```
 
 ### Development Setup
 ```bash
-# Install dependencies
-poetry install --with dev,docs,test
+# Install dependencies (creates virtual environment automatically)
+uv sync --all-extras
 
 # Build the Rust extension
-poetry run maturin develop
+uv run maturin develop
 
 # Verify setup
-poetry run python examples/simple_test.py
+uv run python examples/simple_test.py
 ```
 
 ## Key Integration Points

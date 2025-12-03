@@ -1,8 +1,8 @@
 """
 Shim module for monkeypatching LangGraph with Rust implementations.
 
-This module provides functionality to replace core LangGraph classes with their
-high-performance Rust counterparts while maintaining API compatibility.
+This module provides functionality to replace core LangGraph algorithm functions
+with high-performance Rust counterparts while maintaining API compatibility.
 """
 
 import sys
@@ -11,50 +11,70 @@ from typing import Any, Dict, Optional, Set
 import warnings
 
 # Track what we've patched
-_patched_modules: Set[str] = set()
-_original_classes: Dict[str, Any] = {}
+_patched_functions: Dict[str, Any] = {}
+_original_functions: Dict[str, Any] = {}
 
 def patch_langgraph() -> bool:
     """
-    Patch the original LangGraph modules with Rust implementations.
+    Patch LangGraph algorithm functions with Rust-accelerated implementations.
+
+    This replaces hot-path functions in langgraph.pregel._algo with versions
+    that use Rust for performance-critical operations while maintaining
+    exact API compatibility.
 
     Returns:
         bool: True if patching was successful, False otherwise.
     """
     try:
-        # Import our Rust implementations
-        from . import (
-            BaseChannel as RustBaseChannel,
-            LastValue as RustLastValue,
-            Pregel as RustPregelClass,
-            Checkpoint as RustCheckpoint,
+        # Import our acceleration shims
+        from .algo_shims import (
+            create_accelerated_apply_writes,
+            create_accelerated_prepare_next_tasks,
+            create_accelerated_read_channels,
         )
 
         patches_applied = []
 
-        # NOTE: Direct class patching is disabled because:
-        # 1. Pregel: CompiledStateGraph inherits from it, and PyO3 classes don't support
-        #    proper inheritance with mutable dict properties.
-        # 2. Channels: isinstance() checks in _validate.py fail because modules cache
-        #    imports before patching occurs.
-        #
-        # Instead, use the hybrid acceleration approach:
-        #   from fast_langgraph import AcceleratedPregelLoop
-        #   accelerator = AcceleratedPregelLoop()
-        #
-        # This provides performance gains without breaking compatibility.
+        # Patch apply_writes in _algo module
+        if _patch_function(
+            "langgraph.pregel._algo",
+            "apply_writes",
+            create_accelerated_apply_writes
+        ):
+            patches_applied.append("apply_writes")
 
-        # Mark that patching was "successful" (no-op for compatibility)
-        print("✓ Fast LangGraph loaded (hybrid acceleration available)")
-        print("  Note: Direct class patching disabled for compatibility.")
-        print("  Use AcceleratedPregelLoop for performance optimization.")
-        return True
+        # Patch prepare_next_tasks (when ready)
+        # if _patch_function(
+        #     "langgraph.pregel._algo",
+        #     "prepare_next_tasks",
+        #     create_accelerated_prepare_next_tasks
+        # ):
+        #     patches_applied.append("prepare_next_tasks")
+
+        # Patch read_channels (when ready)
+        # if _patch_function(
+        #     "langgraph.pregel._io",
+        #     "read_channels",
+        #     create_accelerated_read_channels
+        # ):
+        #     patches_applied.append("read_channels")
+
+        if patches_applied:
+            print(f"✓ Fast LangGraph acceleration enabled:")
+            for func in patches_applied:
+                print(f"  - {func} (Rust-accelerated)")
+            return True
+        else:
+            print("✓ Fast LangGraph loaded (no patches applied)")
+            return True
 
     except ImportError as e:
-        print(f"✗ Failed to import Rust implementations: {e}")
+        print(f"✗ Failed to import acceleration modules: {e}")
         return False
     except Exception as e:
         print(f"✗ Unexpected error during patching: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def unpatch_langgraph() -> bool:
@@ -67,21 +87,18 @@ def unpatch_langgraph() -> bool:
     try:
         unpatched = []
 
-        for module_name in list(_patched_modules):
+        for full_func_name, original_func in list(_original_functions.items()):
+            module_name, func_name = full_func_name.rsplit(".", 1)
+
             if module_name in sys.modules:
                 module = sys.modules[module_name]
-
-                # Restore all classes in this module
-                for class_name, original_class in _original_classes.items():
-                    if class_name.startswith(module_name + "."):
-                        attr_name = class_name.split(".")[-1]
-                        if hasattr(module, attr_name):
-                            setattr(module, attr_name, original_class)
-                            unpatched.append(class_name)
+                if hasattr(module, func_name):
+                    setattr(module, func_name, original_func)
+                    unpatched.append(full_func_name)
 
         # Clear tracking
-        _patched_modules.clear()
-        _original_classes.clear()
+        _patched_functions.clear()
+        _original_functions.clear()
 
         if unpatched:
             print(f"✓ Successfully unpatched: {', '.join(unpatched)}")
@@ -94,14 +111,14 @@ def unpatch_langgraph() -> bool:
         print(f"✗ Error during unpatching: {e}")
         return False
 
-def _patch_class(module_name: str, class_name: str, rust_class: Any) -> bool:
+def _patch_function(module_name: str, func_name: str, accelerator_factory: callable) -> bool:
     """
-    Internal function to patch a specific class in a module.
+    Internal function to patch a specific function in a module.
 
     Args:
         module_name: Name of the module to patch
-        class_name: Name of the class to patch
-        rust_class: Rust implementation to use as replacement
+        func_name: Name of the function to patch
+        accelerator_factory: Function that takes the original function and returns accelerated version
 
     Returns:
         bool: True if patching was successful, False otherwise.
@@ -114,49 +131,44 @@ def _patch_class(module_name: str, class_name: str, rust_class: Any) -> bool:
             # Module doesn't exist, skip
             return False
 
-        # Check if the class exists in the module
-        if not hasattr(module, class_name):
+        # Check if the function exists in the module
+        if not hasattr(module, func_name):
+            warnings.warn(f"Function {func_name} not found in {module_name}", RuntimeWarning)
             return False
 
-        # Store the original class for later restoration
-        original_class = getattr(module, class_name)
-        full_class_name = f"{module_name}.{class_name}"
-        _original_classes[full_class_name] = original_class
+        # Store the original function for later restoration
+        original_func = getattr(module, func_name)
+        full_func_name = f"{module_name}.{func_name}"
+        _original_functions[full_func_name] = original_func
 
-        # Directly replace the class with the Rust implementation
-        # Set module and qualname to match the original for better error messages
-        try:
-            rust_class.__module__ = original_class.__module__
-            rust_class.__qualname__ = original_class.__qualname__
-        except (AttributeError, TypeError):
-            # Some attributes might be read-only on Rust classes
-            pass
+        # Create accelerated version
+        accelerated_func = accelerator_factory(original_func)
 
-        # Replace the class in the module
-        setattr(module, class_name, rust_class)
+        # Replace the function in the module
+        setattr(module, func_name, accelerated_func)
 
-        # Track that we've patched this module
-        _patched_modules.add(module_name)
+        # Track that we've patched this function
+        _patched_functions[full_func_name] = accelerated_func
 
         return True
 
     except Exception as e:
-        warnings.warn(f"Failed to patch {module_name}.{class_name}: {e}", RuntimeWarning)
+        warnings.warn(f"Failed to patch {module_name}.{func_name}: {e}", RuntimeWarning)
         return False
 
-def is_patched(module_name: str, class_name: str) -> bool:
+def is_patched(module_name: str, func_name: str) -> bool:
     """
-    Check if a specific class has been patched.
+    Check if a specific function has been patched.
 
     Args:
         module_name: Name of the module
-        class_name: Name of the class
+        func_name: Name of the function
 
     Returns:
-        bool: True if the class has been patched, False otherwise.
+        bool: True if the function has been patched, False otherwise.
     """
-    full_class_name = f"{module_name}.{class_name}"
-    return full_class_name in _original_classes
+    full_func_name = f"{module_name}.{func_name}"
+    return full_func_name in _original_functions
 
 def get_patch_status() -> Dict[str, bool]:
     """
@@ -166,17 +178,24 @@ def get_patch_status() -> Dict[str, bool]:
         Dict mapping component names to their patch status.
     """
     components = [
-        # Pregel patching disabled - see shim.py comments
-        # "langgraph.pregel.main.Pregel",
-        # "langgraph.pregel.Pregel",
-        "langgraph.channels.base.BaseChannel",
-        "langgraph.channels.last_value.LastValue",
-        "langgraph.channels.LastValue",
+        "langgraph.pregel._algo.apply_writes",
+        "langgraph.pregel._algo.prepare_next_tasks",
+        "langgraph.pregel._io.read_channels",
     ]
 
     status = {}
     for component in components:
-        module_name, class_name = component.rsplit(".", 1)
-        status[component] = is_patched(module_name, class_name)
+        module_name, func_name = component.rsplit(".", 1)
+        status[component] = is_patched(module_name, func_name)
 
     return status
+
+
+def is_patched() -> bool:
+    """
+    Check if any LangGraph functions are currently patched.
+
+    Returns:
+        bool: True if at least one function is patched, False otherwise.
+    """
+    return len(_original_functions) > 0
