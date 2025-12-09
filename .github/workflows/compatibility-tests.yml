@@ -49,13 +49,22 @@ jobs:
         run: |
           # Run LangGraph tests with Fast LangGraph shim applied
           # The script automatically ignores tests with complex fixture requirements
+          # Generates COMPATIBILITY.md report
           python scripts/test_compatibility.py --branch $LANGGRAPH_BRANCH -v --keep -- -v -x
 
-      - name: Upload results
+      - name: Upload compatibility report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: results-ubuntu-py3.12
+          name: compatibility-report
+          path: COMPATIBILITY.md
+          retention-days: 30
+
+      - name: Upload test environment
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-environment
           path: .langgraph-test/
           retention-days: 7
 
