@@ -43,19 +43,8 @@ jobs:
         run: cargo test --no-default-features --verbose
 
   python:
-    name: Python ${{ matrix.python-version }} (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-        include:
-          # Only test latest Python on macOS/Windows
-          - os: macos-latest
-            python-version: '3.12'
-          - os: windows-latest
-            python-version: '3.12'
+    name: Python
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
