@@ -11,12 +11,12 @@ Compares:
 - Execution time (accelerated should be faster)
 """
 
+import json
+import subprocess
 import sys
 import time
-import subprocess
-import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Paths
 FAST_LANGGRAPH_ROOT = Path(__file__).parent.parent
@@ -124,7 +124,7 @@ sys.exit(exit_code)
         return results
 
     except subprocess.TimeoutExpired:
-        print(f"ERROR: Tests timed out after 300 seconds")
+        print("ERROR: Tests timed out after 300 seconds")
         return {
             "test_type": test_type,
             "passed": 0,
@@ -174,7 +174,7 @@ def compare_results(baseline: Dict[str, Any], accelerated: Dict[str, Any]) -> No
         print(f"  {metric.capitalize():<15} {b_val:<12} {a_val:<12} {match:<10}")
 
     # Performance comparison
-    print(f"\nPerformance:")
+    print("\nPerformance:")
     b_duration = baseline['duration']
     a_duration = accelerated['duration']
     speedup = b_duration / a_duration if a_duration > 0 else 0
@@ -186,7 +186,7 @@ def compare_results(baseline: Dict[str, Any], accelerated: Dict[str, Any]) -> No
     print(f"  Improvement:          {improvement:.1f}%")
 
     # Overall verdict
-    print(f"\nVerdict:")
+    print("\nVerdict:")
     counts_match = all(
         baseline[m] == accelerated[m]
         for m in ['passed', 'failed', 'errors']

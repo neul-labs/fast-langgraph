@@ -134,6 +134,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*" = ["F401", "F841", "B007"]  # unused imports/vars, loop control var not used
+"scripts/*" = ["F401", "F841", "E402", "F541", "I001", "B007"]  # scripts have relaxed linting
 
 [tool.mypy]
 python_version = "3.9"

@@ -5,19 +5,17 @@ Benchmark the three new shimming-friendly features:
 3. Profiling tools (overhead measurement)
 """
 
-import time
 import sys
-from typing import Dict, Any
+import time
 
 # Import fast-langgraph features
 from fast_langgraph import (
-    merge_dicts,
-    deep_merge_dicts,
-    merge_many_dicts,
-    langgraph_state_update,
     RustFunctionCache,
-    cached,
     RustTTLCache,
+    cached,
+    deep_merge_dicts,
+    langgraph_state_update,
+    merge_dicts,
 )
 from fast_langgraph.profiler import GraphProfiler
 

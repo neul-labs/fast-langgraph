@@ -10,20 +10,20 @@ This script measures the combined impact of:
 It runs the same workload with and without optimizations to measure actual speedup.
 """
 
+import statistics
 import sys
 import time
-import statistics
-from pathlib import Path
-from typing import TypedDict, Annotated
 from operator import add
+from pathlib import Path
+from typing import Annotated, TypedDict
 
 # Add paths
 FAST_LANGGRAPH_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(FAST_LANGGRAPH_ROOT))
 sys.path.insert(0, str(FAST_LANGGRAPH_ROOT / ".langgraph-test" / "langgraph" / "libs" / "langgraph"))
 
-from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
 
 
 class AgentState(TypedDict):
@@ -166,7 +166,7 @@ def run_benchmark(num_iterations: int = 100, warmup: int = 5, num_sessions: int 
     print("Fast LangGraph Optimization Benchmark")
     print("=" * 70)
     print()
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Sessions: {num_sessions} conversation threads")
     print(f"  Iterations per session: {num_iterations}")
     print(f"  Total invocations: {num_sessions * num_iterations}")

@@ -36,8 +36,9 @@ def run_test_workflow(use_shim=False):
         print()
 
     # Import LangGraph after shimming (if enabled)
-    from langgraph.graph import StateGraph, END
     from typing import TypedDict
+
+    from langgraph.graph import END, StateGraph
 
     # Define a simple state
     class State(TypedDict):
@@ -147,9 +148,9 @@ def main():
         if speedup > 1.0:
             print(f"✓ SUCCESS: Rust acceleration provides {speedup:.2f}x speedup!")
         elif speedup > 0.95:
-            print(f"⚠ NEUTRAL: Performance similar (within 5%)")
+            print("⚠ NEUTRAL: Performance similar (within 5%)")
         else:
-            print(f"✗ REGRESSION: Accelerated version is slower!")
+            print("✗ REGRESSION: Accelerated version is slower!")
     else:
         print("ERROR: Cannot compute speedup (accelerated duration is 0)")
 

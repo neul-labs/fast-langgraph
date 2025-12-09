@@ -46,7 +46,10 @@ jobs:
       - name: Run compatibility tests
         env:
           LANGGRAPH_BRANCH: ${{ github.event.inputs.langgraph_branch || 'main' }}
-        run: python scripts/test_compatibility.py --branch $LANGGRAPH_BRANCH -v
+        run: |
+          # Run LangGraph tests with Fast LangGraph shim applied
+          # The script automatically ignores tests with complex fixture requirements
+          python scripts/test_compatibility.py --branch $LANGGRAPH_BRANCH -v --keep -- -v -x
 
       - name: Upload results
         if: always()

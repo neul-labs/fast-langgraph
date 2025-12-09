@@ -11,21 +11,21 @@ This creates a representative graph with:
 Then profiles where time is actually spent.
 """
 
-import sys
-import time
 import cProfile
 import pstats
-from pathlib import Path
-from typing import TypedDict, Annotated
+import sys
+import time
 from operator import add
+from pathlib import Path
+from typing import Annotated, TypedDict
 
 # Add paths
 FAST_LANGGRAPH_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(FAST_LANGGRAPH_ROOT))
 sys.path.insert(0, str(FAST_LANGGRAPH_ROOT / ".langgraph-test" / "langgraph" / "libs" / "langgraph"))
 
-from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
 
 
 class AgentState(TypedDict):

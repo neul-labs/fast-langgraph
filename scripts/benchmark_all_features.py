@@ -16,11 +16,8 @@ This benchmark tests all 9 feature categories:
 
 import sys
 import time
-import statistics
 from pathlib import Path
-from typing import TypedDict, Dict, List, Any
-import tempfile
-import os
+from typing import Dict
 
 # Add paths
 FAST_LANGGRAPH_ROOT = Path(__file__).parent.parent
@@ -28,24 +25,18 @@ sys.path.insert(0, str(FAST_LANGGRAPH_ROOT))
 
 # Import fast-langgraph features
 from fast_langgraph import (
-    # Channels
-    RustLastValue,
+    GraphProfiler,
     # Checkpointing
     RustCheckpointer,
-    RustSQLiteCheckpointer,
-    # LLM Cache
-    RustLLMCache,
-    RustSQLiteLLMCache,
-    # State merge
-    merge_dicts,
-    deep_merge_dicts,
-    langgraph_state_update,
     # Function caching
     RustFunctionCache,
+    # Channels
+    RustLastValue,
+    RustLLMCache,
     cached,
-    RustTTLCache,
-    # Profiling
-    GraphProfiler,
+    deep_merge_dicts,
+    langgraph_state_update,
+    merge_dicts,
 )
 
 
@@ -167,7 +158,7 @@ def benchmark_llm_cache():
     with_cache_time = time.perf_counter() - start
 
     speedup = no_cache_time / with_cache_time
-    print(f"\nLLM Call Caching:")
+    print("\nLLM Call Caching:")
     print(f"  Without cache: {no_cache_time*1000:.2f} ms (100 calls)")
     print(f"  With cache:    {with_cache_time*1000:.2f} ms (100 calls)")
     print(f"  Speedup: {speedup:.2f}x")
@@ -246,7 +237,7 @@ def benchmark_state_merge():
         result = langgraph_state_update(state, updates_lg, append_keys=["messages"])
     lg_time = time.perf_counter() - start
 
-    print(f"\nLangGraph State Update:")
+    print("\nLangGraph State Update:")
     print(f"  Time: {lg_time*1000:.2f} ms ({iterations} iterations)")
     print(f"  Per update: {lg_time/iterations*1000000:.2f} μs")
 
@@ -294,7 +285,7 @@ def benchmark_function_cache():
     cached_time = time.perf_counter() - start
 
     speedup = uncached_time / cached_time
-    print(f"\nFunction Caching:")
+    print("\nFunction Caching:")
     print(f"  Uncached: {uncached_time*1000:.2f} ms ({iterations} calls)")
     print(f"  Cached:   {cached_time*1000:.2f} ms ({iterations} calls)")
     print(f"  Speedup: {speedup:.2f}x")
@@ -311,7 +302,7 @@ def benchmark_function_cache():
         result = cache.get((50,))
     lookup_time = time.perf_counter() - start
 
-    print(f"\nCache Lookup Performance:")
+    print("\nCache Lookup Performance:")
     print(f"  Time: {lookup_time*1000:.2f} ms ({iterations} lookups)")
     print(f"  Per lookup: {lookup_time/iterations*1000000:.2f} μs")
 
@@ -351,7 +342,7 @@ def benchmark_profiler():
     overhead = with_profile_time - no_profile_time
     overhead_pct = (overhead / no_profile_time) * 100
 
-    print(f"\nProfiler Overhead:")
+    print("\nProfiler Overhead:")
     print(f"  Without profiling: {no_profile_time*1000:.2f} ms ({iterations} ops)")
     print(f"  With profiling:    {with_profile_time*1000:.2f} ms ({iterations} ops)")
     print(f"  Overhead: {overhead*1000:.2f} ms ({overhead_pct:.1f}%)")
@@ -374,26 +365,26 @@ def print_summary(results: Dict[str, Dict[str, float]]):
     # Channels
     if "channels" in results:
         ch = results["channels"]
-        print(f"\n3. Fast Channels:")
+        print("\n3. Fast Channels:")
         print(f"   Channel Updates: {ch['channels']:.2f}x speedup")
 
     # Checkpointing
     if "checkpointing" in results:
         cp = results["checkpointing"]
-        print(f"\n4. Fast Checkpointing:")
+        print("\n4. Fast Checkpointing:")
         print(f"   Save: {cp['checkpoint_save']:.2f}x speedup")
         print(f"   Load: {cp['checkpoint_load']:.2f}x speedup")
 
     # LLM Cache
     if "llm_cache" in results:
         llm = results["llm_cache"]
-        print(f"\n5. LLM Caching:")
+        print("\n5. LLM Caching:")
         print(f"   With 90% cache hit rate: {llm['llm_cache']:.2f}x speedup")
 
     # State Merge
     if "state_merge" in results:
         sm = results["state_merge"]
-        print(f"\n6. State Merge Operations:")
+        print("\n6. State Merge Operations:")
         print(f"   Simple merge: {sm['state_merge']:.2f}x")
         print(f"   Deep merge: {sm['deep_merge']:.2f}x")
         print(f"   LangGraph update: {sm['langgraph_update_us']:.2f} μs per operation")
@@ -401,7 +392,7 @@ def print_summary(results: Dict[str, Dict[str, float]]):
     # Function Cache
     if "function_cache" in results:
         fc = results["function_cache"]
-        print(f"\n7. Function Caching:")
+        print("\n7. Function Caching:")
         print(f"   Cached calls: {fc['function_cache_speedup']:.2f}x speedup")
         print(f"   Cache overhead: {fc['cache_overhead_us']:.2f} μs")
         print(f"   Lookup time: {fc['lookup_time_us']:.2f} μs")
@@ -409,7 +400,7 @@ def print_summary(results: Dict[str, Dict[str, float]]):
     # Profiler
     if "profiler" in results:
         pr = results["profiler"]
-        print(f"\n8. Profiling Tools:")
+        print("\n8. Profiling Tools:")
         print(f"   Overhead: {pr['profiler_overhead_pct']:.1f}%")
         print(f"   Per operation: {pr['profiler_overhead_us']:.2f} μs")
 

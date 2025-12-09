@@ -27,10 +27,9 @@ class State(TypedDict):
 
 def benchmark_python_channels(iterations: int = 1000):
     """Benchmark with Python LastValue channels."""
-    from langgraph.graph import StateGraph, END
-    from langgraph.channels import LastValue as PyLastValue
+    from langgraph.graph import END, StateGraph
 
-    print(f"Creating graph with Python channels...")
+    print("Creating graph with Python channels...")
 
     # Create graph
     graph = StateGraph(State)
@@ -83,11 +82,12 @@ def benchmark_python_channels(iterations: int = 1000):
 
 def benchmark_rust_channels(iterations: int = 1000):
     """Benchmark with Rust RustLastValue channels."""
-    from langgraph.graph import StateGraph, END
-    from fast_langgraph import RustLastValue
-    import fast_langgraph.shim as shim
+    from langgraph.graph import END, StateGraph
 
-    print(f"Creating graph with Rust channels...")
+    import fast_langgraph.shim as shim
+    from fast_langgraph import RustLastValue
+
+    print("Creating graph with Rust channels...")
 
     # Apply shim for acceleration
     shim.patch_langgraph()
@@ -149,7 +149,8 @@ def benchmark_rust_channels(iterations: int = 1000):
 def benchmark_channel_operations_only(iterations: int = 100000):
     """Benchmark just the channel update operations without full graph execution."""
     from langgraph.channels import LastValue as PyLastValue
-    from fast_langgraph import RustLastValue, FastChannelUpdater
+
+    from fast_langgraph import RustLastValue
 
     print("=" * 70)
     print("Direct Channel Operations Benchmark")
@@ -157,7 +158,7 @@ def benchmark_channel_operations_only(iterations: int = 100000):
     print()
 
     # Benchmark Python channels
-    print(f"Testing Python LastValue channel updates...")
+    print("Testing Python LastValue channel updates...")
     py_chan = PyLastValue(int)
     py_chan.key = "test"
 
@@ -172,7 +173,7 @@ def benchmark_channel_operations_only(iterations: int = 100000):
     print()
 
     # Benchmark Rust channels
-    print(f"Testing Rust RustLastValue channel updates...")
+    print("Testing Rust RustLastValue channel updates...")
     rust_chan = RustLastValue(int, "test")
 
     start_time = time.time()
@@ -259,9 +260,9 @@ def main():
         if speedup > 1.1:
             print(f"✓ SUCCESS: Rust channels provide {speedup:.2f}x speedup!")
         elif speedup > 0.95:
-            print(f"⚠ NEUTRAL: Performance similar (within 5%)")
+            print("⚠ NEUTRAL: Performance similar (within 5%)")
         else:
-            print(f"✗ REGRESSION: Rust channels are slower")
+            print("✗ REGRESSION: Rust channels are slower")
 
     print()
     print("Note: The graph execution speedup is lower than channel speedup")

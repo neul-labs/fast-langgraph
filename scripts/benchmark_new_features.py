@@ -3,16 +3,21 @@ Benchmark new features: SQLite Checkpointer and LLM Cache
 """
 
 import os
-import sys
-import time
-import tempfile
 import statistics
-from typing import Dict, List
+import sys
+import tempfile
+import time
+from typing import Dict
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fast_langgraph import RustCheckpointer, RustSQLiteCheckpointer, RustLLMCache, RustSQLiteLLMCache
+from fast_langgraph import (
+    RustCheckpointer,
+    RustLLMCache,
+    RustSQLiteCheckpointer,
+    RustSQLiteLLMCache,
+)
 
 
 def benchmark_checkpoint_put(checkpointer, num_ops: int = 100) -> float:
@@ -160,7 +165,7 @@ def print_result(name: str, value: float, unit: str = "ms"):
 def main():
     print_header("Fast LangGraph - New Features Benchmark")
     print(f"  Python version: {sys.version.split()[0]}")
-    print(f"  Running benchmarks...")
+    print("  Running benchmarks...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         # ================================================================

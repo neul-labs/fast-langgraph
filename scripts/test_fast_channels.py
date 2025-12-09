@@ -62,7 +62,7 @@ def test_fast_channel_updater():
     print("Testing FastChannelUpdater...")
     print("-" * 70)
 
-    from fast_langgraph import RustLastValue, FastChannelUpdater
+    from fast_langgraph import FastChannelUpdater, RustLastValue
 
     # Create mixed channels
     rust_chan1 = RustLastValue(int, "rust1")
@@ -83,7 +83,7 @@ def test_fast_channel_updater():
     updater = FastChannelUpdater()
     updated = updater.apply_writes_batch(channels, pending_writes)
 
-    print(f"✓ Applied writes to channels")
+    print("✓ Applied writes to channels")
     print(f"✓ Updated channels: {updated}")
 
     # Verify updates
@@ -106,7 +106,7 @@ def test_mixed_python_rust_channels():
     print("Testing mixed Python/Rust channels...")
     print("-" * 70)
 
-    from fast_langgraph import RustLastValue, FastChannelUpdater
+    from fast_langgraph import FastChannelUpdater, RustLastValue
 
     # Import Python LastValue
     sys.path.insert(0, str(FAST_LANGGRAPH_ROOT / ".langgraph-test" / "langgraph" / "libs" / "langgraph"))
@@ -132,7 +132,7 @@ def test_mixed_python_rust_channels():
     updater = FastChannelUpdater()
     updated = updater.apply_writes_batch(channels, pending_writes)
 
-    print(f"✓ Applied writes to mixed channels")
+    print("✓ Applied writes to mixed channels")
     print(f"✓ Updated channels: {updated}")
 
     # Verify updates
