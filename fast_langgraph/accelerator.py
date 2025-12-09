@@ -5,12 +5,11 @@ This module provides Python wrappers that integrate Rust accelerators
 into the LangGraph execution loop for hot path optimization.
 """
 
-import sys
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Set
-from collections import deque
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 try:
-    from . import PregelAccelerator, ChannelManager, TaskScheduler
+    from . import ChannelManager, PregelAccelerator, TaskScheduler
+
     _accelerator_available = True
 except ImportError:
     _accelerator_available = False
@@ -54,7 +53,7 @@ class AcceleratedPregelLoop:
         # Build trigger_to_nodes mapping for fast lookups
         self._trigger_to_nodes = {}
         for node_name, node in nodes.items():
-            triggers = getattr(node, 'triggers', [])
+            triggers = getattr(node, "triggers", [])
             for trigger in triggers:
                 if trigger not in self._trigger_to_nodes:
                     self._trigger_to_nodes[trigger] = []
@@ -115,7 +114,9 @@ class AcceleratedPregelLoop:
 
         return self._accelerator.execute_step(writes)
 
-    def get_channel_values(self, channel_names: Optional[List[str]] = None) -> Dict[str, Any]:
+    def get_channel_values(
+        self, channel_names: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """
         Get current values from channels.
 
@@ -185,9 +186,6 @@ def accelerate_apply_writes(
     cm = ChannelManager()
     cm.init_channels(channels)
 
-    # Convert to batch format
-    batch = [(name, values) for name, values in channel_writes.items()]
-
     updated = set()
     for channel_name, values in channel_writes.items():
         if channel_name in channels:
@@ -250,7 +248,7 @@ def accelerate_triggers(
         return _python_triggers(channels, versions, seen, node_triggers)
 
     # Use Rust for fast version comparison
-    ts = TaskScheduler()
+    _ts = TaskScheduler()  # noqa: F841
 
     # For now, use Python implementation
     # TODO: Add direct trigger check to Rust TaskScheduler
@@ -288,7 +286,7 @@ def patch_algo():
         from langgraph.pregel import _algo
 
         # Store originals
-        if hasattr(_algo, 'apply_writes'):
+        if hasattr(_algo, "apply_writes"):
             _original_apply_writes = _algo.apply_writes
 
         # We can't fully replace apply_writes without more complex integration

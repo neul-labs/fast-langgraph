@@ -1,13 +1,13 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyBytes};
+use pyo3::types::{PyBytes, PyDict};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 
 /// Fast checkpoint data structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CheckpointData {
     /// Channel values at this checkpoint
-    pub channel_values: HashMap<String, Vec<u8>>,  // Serialized values
+    pub channel_values: HashMap<String, Vec<u8>>, // Serialized values
 
     /// Channel versions
     pub channel_versions: HashMap<String, usize>,
@@ -16,7 +16,7 @@ pub struct CheckpointData {
     pub versions_seen: HashMap<String, HashMap<String, usize>>,
 
     /// Pending writes
-    pub pending_writes: Vec<(String, String, Vec<u8>)>,  // (task_id, channel, value)
+    pub pending_writes: Vec<(String, String, Vec<u8>)>, // (task_id, channel, value)
 
     /// Current step number
     pub step: usize,
@@ -73,15 +73,14 @@ impl RustCheckpointer {
         };
 
         // Serialize using MessagePack (much faster than pickle!)
-        let serialized = rmp_serde::to_vec(&checkpoint_data)
-            .map_err(|e| {
-                pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
-            })?;
+        let serialized = rmp_serde::to_vec(&checkpoint_data).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
+        })?;
 
         // Store in memory
         self.checkpoints
             .entry(thread_id)
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(checkpoint_id, serialized);
 
         Ok(true)
@@ -111,10 +110,9 @@ impl RustCheckpointer {
         };
 
         // Deserialize using MessagePack
-        let checkpoint_data: CheckpointData = rmp_serde::from_slice(serialized)
-            .map_err(|e| {
-                pyo3::exceptions::PyValueError::new_err(format!("Deserialization error: {}", e))
-            })?;
+        let checkpoint_data: CheckpointData = rmp_serde::from_slice(serialized).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Deserialization error: {}", e))
+        })?;
 
         // Convert back to Python dict
         let result = self.checkpoint_data_to_py(py, &checkpoint_data)?;
@@ -131,11 +129,7 @@ impl RustCheckpointer {
     }
 
     /// Delete a checkpoint
-    fn delete(
-        &mut self,
-        thread_id: String,
-        checkpoint_id: String,
-    ) -> bool {
+    fn delete(&mut self, thread_id: String, checkpoint_id: String) -> bool {
         self.checkpoints
             .get_mut(&thread_id)
             .and_then(|thread_checkpoints| thread_checkpoints.remove(&checkpoint_id))
@@ -153,7 +147,8 @@ impl RustCheckpointer {
 
         let total_threads = self.checkpoints.len();
         let total_checkpoints: usize = self.checkpoints.values().map(|c| c.len()).sum();
-        let total_bytes: usize = self.checkpoints
+        let total_bytes: usize = self
+            .checkpoints
             .values()
             .flat_map(|c| c.values())
             .map(|v| v.len())
@@ -195,11 +190,7 @@ impl RustCheckpointer {
     }
 
     /// Extract version dict
-    fn extract_versions(
-        &self,
-        checkpoint: &PyDict,
-        key: &str,
-    ) -> PyResult<HashMap<String, usize>> {
+    fn extract_versions(&self, checkpoint: &PyDict, key: &str) -> PyResult<HashMap<String, usize>> {
         let mut versions = HashMap::new();
 
         if let Ok(Some(versions_obj)) = checkpoint.get_item(key) {
@@ -245,11 +236,7 @@ impl RustCheckpointer {
     }
 
     /// Convert checkpoint data back to Python dict
-    fn checkpoint_data_to_py(
-        &self,
-        py: Python,
-        data: &CheckpointData,
-    ) -> PyResult<PyObject> {
+    fn checkpoint_data_to_py(&self, py: Python, data: &CheckpointData) -> PyResult<PyObject> {
         let result = PyDict::new(py);
 
         // Deserialize channel values
@@ -290,7 +277,7 @@ impl RustCheckpointer {
 }
 
 /// Register checkpoint module
-pub fn register_checkpoint(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn register_checkpoint(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<RustCheckpointer>()?;
     Ok(())
 }

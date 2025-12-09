@@ -4,7 +4,9 @@ Test LLM Cache functionality
 
 import os
 import tempfile
+
 import pytest
+
 from fast_langgraph import RustLLMCache, RustSQLiteLLMCache
 
 
@@ -169,6 +171,7 @@ def test_sqlite_llm_cache_cleanup():
 
         # Cleanup expired entries
         import time
+
         time.sleep(0.1)  # Wait a bit to ensure expiry
         deleted = cache.cleanup()
 

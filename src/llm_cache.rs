@@ -1,17 +1,17 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyBytes};
+use pyo3::types::PyBytes;
+use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
-use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "sqlite")]
-use rusqlite::{Connection, params, Result as SqliteResult};
+use rusqlite::{params, Connection, Result as SqliteResult};
 
 /// Cached LLM response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CachedResponse {
-    response: Vec<u8>,  // Pickled Python response
+    response: Vec<u8>, // Pickled Python response
     timestamp: i64,
     hits: usize,
 }
@@ -84,10 +84,7 @@ impl RustLLMCache {
         // Check cache size and evict if necessary
         if self.cache.len() >= self.max_size && !self.cache.contains_key(&hash) {
             // Simple LRU: evict the entry with lowest hits
-            if let Some((&key_to_remove, _)) = self.cache
-                .iter()
-                .min_by_key(|(_, v)| v.hits)
-            {
+            if let Some((&key_to_remove, _)) = self.cache.iter().min_by_key(|(_, v)| v.hits) {
                 self.cache.remove(&key_to_remove);
             }
         }
@@ -206,7 +203,8 @@ impl RustSQLiteLLMCache {
                 conn.execute(
                     "UPDATE llm_cache SET hits = hits + 1 WHERE hash = ?1",
                     params![hash.to_string()],
-                ).ok();
+                )
+                .ok();
 
                 self.hits += 1;
 
@@ -222,7 +220,10 @@ impl RustSQLiteLLMCache {
                 self.misses += 1;
                 Ok(None)
             }
-            Err(e) => Err(pyo3::exceptions::PyIOError::new_err(format!("Query error: {}", e))),
+            Err(e) => Err(pyo3::exceptions::PyIOError::new_err(format!(
+                "Query error: {}",
+                e
+            ))),
         }
     }
 
@@ -247,7 +248,8 @@ impl RustSQLiteLLMCache {
             "INSERT OR REPLACE INTO llm_cache (hash, prompt, response, timestamp, hits)
              VALUES (?1, ?2, ?3, ?4, 0)",
             params![hash.to_string(), prompt, serialized.as_bytes(), timestamp],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Insert error: {}", e)))?;
+        )
+        .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Insert error: {}", e)))?;
 
         Ok(())
     }
@@ -270,17 +272,13 @@ impl RustSQLiteLLMCache {
         let conn = Connection::open(&self.db_path)
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Database error: {}", e)))?;
 
-        let size: usize = conn.query_row(
-            "SELECT COUNT(*) FROM llm_cache",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let size: usize = conn
+            .query_row("SELECT COUNT(*) FROM llm_cache", [], |row| row.get(0))
+            .unwrap_or(0);
 
-        let total_hits: usize = conn.query_row(
-            "SELECT SUM(hits) FROM llm_cache",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let total_hits: usize = conn
+            .query_row("SELECT SUM(hits) FROM llm_cache", [], |row| row.get(0))
+            .unwrap_or(0);
 
         let mut stats = HashMap::new();
         stats.insert("size".to_string(), size);
@@ -307,13 +305,18 @@ impl RustSQLiteLLMCache {
                 .as_secs() as i64;
             let cutoff = now - max_age;
 
-            let conn = Connection::open(&self.db_path)
-                .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Database error: {}", e)))?;
+            let conn = Connection::open(&self.db_path).map_err(|e| {
+                pyo3::exceptions::PyIOError::new_err(format!("Database error: {}", e))
+            })?;
 
-            let rows_deleted = conn.execute(
-                "DELETE FROM llm_cache WHERE timestamp < ?1",
-                params![cutoff],
-            ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Delete error: {}", e)))?;
+            let rows_deleted = conn
+                .execute(
+                    "DELETE FROM llm_cache WHERE timestamp < ?1",
+                    params![cutoff],
+                )
+                .map_err(|e| {
+                    pyo3::exceptions::PyIOError::new_err(format!("Delete error: {}", e))
+                })?;
 
             Ok(rows_deleted)
         } else {
@@ -328,11 +331,13 @@ impl RustSQLiteLLMCache {
         let conn = Connection::open(&self.db_path)
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Database error: {}", e)))?;
 
-        let count: usize = conn.query_row(
-            "SELECT COUNT(*) FROM llm_cache WHERE hash = ?1",
-            params![hash.to_string()],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let count: usize = conn
+            .query_row(
+                "SELECT COUNT(*) FROM llm_cache WHERE hash = ?1",
+                params![hash.to_string()],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
 
         Ok(count > 0)
     }
@@ -353,13 +358,15 @@ impl RustSQLiteLLMCache {
                 hits INTEGER DEFAULT 0
             )",
             [],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create table error: {}", e)))?;
+        )
+        .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create table error: {}", e)))?;
 
         // Create index for timestamp-based queries
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_timestamp ON llm_cache(timestamp)",
             [],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create index error: {}", e)))?;
+        )
+        .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create index error: {}", e)))?;
 
         Ok(())
     }

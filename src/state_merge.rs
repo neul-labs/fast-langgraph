@@ -5,7 +5,6 @@ use pyo3::types::{PyDict, PyList};
 ///
 /// These functions replace Python's dict merging operations in hot paths
 /// of LangGraph's execution, providing 3-5x speedup for state updates.
-
 /// Merge two Python dictionaries efficiently
 ///
 /// This is equivalent to Python's `{**base, **updates}` but faster.
@@ -74,7 +73,7 @@ pub fn merge_many_dicts(py: Python, dicts: &PyList) -> PyResult<PyObject> {
             }
         } else {
             return Err(pyo3::exceptions::PyTypeError::new_err(
-                "All items must be dictionaries"
+                "All items must be dictionaries",
             ));
         }
     }
@@ -117,11 +116,7 @@ pub fn merge_lists(py: Python, base: &PyList, updates: &PyList) -> PyResult<PyOb
 /// This optimizes the common pattern in LangGraph of applying
 /// multiple state updates at once.
 #[pyfunction]
-pub fn apply_writes_batch(
-    py: Python,
-    state: &PyDict,
-    writes: &PyList,
-) -> PyResult<PyObject> {
+pub fn apply_writes_batch(py: Python, state: &PyDict, writes: &PyList) -> PyResult<PyObject> {
     let result = PyDict::new(py);
 
     // Copy base state

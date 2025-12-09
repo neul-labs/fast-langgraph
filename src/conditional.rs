@@ -21,11 +21,7 @@ pub struct ConditionalEdge {
 
 impl ConditionalEdge {
     /// Create a new conditional edge
-    pub fn new(
-        source: String,
-        condition: PyObject,
-        path_map: HashMap<String, String>,
-    ) -> Self {
+    pub fn new(source: String, condition: PyObject, path_map: HashMap<String, String>) -> Self {
         Self {
             source,
             condition,
@@ -58,12 +54,10 @@ impl ConditionalEdge {
         } else if let Some(ref default) = self.default {
             Ok(default.clone())
         } else {
-            Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                format!(
-                    "Condition returned '{}' but no matching path in map and no default provided",
-                    routing_key
-                ),
-            ))
+            Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Condition returned '{}' but no matching path in map and no default provided",
+                routing_key
+            )))
         }
     }
 
@@ -157,9 +151,7 @@ impl Branch {
 }
 
 /// Evaluate all possible branches from a conditional edge
-pub fn evaluate_branches(
-    edge: &ConditionalEdge,
-) -> Vec<Branch> {
+pub fn evaluate_branches(edge: &ConditionalEdge) -> Vec<Branch> {
     let mut branches = Vec::new();
 
     for (condition_result, target) in &edge.path_map {
@@ -183,17 +175,19 @@ mod tests {
 
         Python::with_gil(|py| {
             // Create a simple condition function
-            let condition = py.eval("lambda x: 'a' if x.get('value', 0) > 10 else 'b'", None, None).unwrap();
+            let condition = py
+                .eval(
+                    "lambda x: 'a' if x.get('value', 0) > 10 else 'b'",
+                    None,
+                    None,
+                )
+                .unwrap();
 
             let mut path_map = HashMap::new();
             path_map.insert("a".to_string(), "node_a".to_string());
             path_map.insert("b".to_string(), "node_b".to_string());
 
-            let edge = ConditionalEdge::new(
-                "source".to_string(),
-                condition.into(),
-                path_map,
-            );
+            let edge = ConditionalEdge::new("source".to_string(), condition.into(), path_map);
 
             assert_eq!(edge.source, "source");
             assert_eq!(edge.possible_targets().len(), 2);
@@ -211,11 +205,7 @@ mod tests {
             let mut path_map = HashMap::new();
             path_map.insert("continue".to_string(), "next".to_string());
 
-            let edge = ConditionalEdge::new(
-                "start".to_string(),
-                condition.into(),
-                path_map,
-            );
+            let edge = ConditionalEdge::new("start".to_string(), condition.into(), path_map);
 
             router.add_edge(edge);
 
@@ -234,12 +224,8 @@ mod tests {
             path_map.insert("path1".to_string(), "node1".to_string());
             path_map.insert("path2".to_string(), "node2".to_string());
 
-            let edge = ConditionalEdge::new(
-                "source".to_string(),
-                condition,
-                path_map,
-            )
-            .with_default("default_node".to_string());
+            let edge = ConditionalEdge::new("source".to_string(), condition, path_map)
+                .with_default("default_node".to_string());
 
             let branches = evaluate_branches(&edge);
             assert_eq!(branches.len(), 3); // 2 paths + 1 default

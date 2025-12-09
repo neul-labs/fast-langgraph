@@ -71,11 +71,7 @@ impl GraphState {
     }
 
     /// Update multiple channels atomically
-    pub fn update_many(
-        &mut self,
-        py: Python,
-        updates: HashMap<String, PyObject>,
-    ) -> PyResult<()> {
+    pub fn update_many(&mut self, py: Python, updates: HashMap<String, PyObject>) -> PyResult<()> {
         for (channel_name, value) in updates {
             self.update_channel(py, &channel_name, value)?;
         }
@@ -202,8 +198,22 @@ mod tests {
             state.update_many(py, updates).unwrap();
 
             // Check both values
-            assert_eq!(state.get_value(py, "a").unwrap().extract::<i32>(py).unwrap(), 1);
-            assert_eq!(state.get_value(py, "b").unwrap().extract::<i32>(py).unwrap(), 2);
+            assert_eq!(
+                state
+                    .get_value(py, "a")
+                    .unwrap()
+                    .extract::<i32>(py)
+                    .unwrap(),
+                1
+            );
+            assert_eq!(
+                state
+                    .get_value(py, "b")
+                    .unwrap()
+                    .extract::<i32>(py)
+                    .unwrap(),
+                2
+            );
         });
     }
 

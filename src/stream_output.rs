@@ -7,9 +7,10 @@ use pyo3::types::PyDict;
 use std::collections::HashMap;
 
 /// Stream mode determines what information is yielded during streaming execution
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum StreamMode {
     /// Emit all channel values after each step
+    #[default]
     Values,
     /// Emit only the updates (node outputs) for each step
     Updates,
@@ -19,9 +20,10 @@ pub enum StreamMode {
     Multiple(Vec<StreamMode>),
 }
 
-impl StreamMode {
-    /// Parse stream mode from string
-    pub fn from_str(s: &str) -> Result<Self, String> {
+impl std::str::FromStr for StreamMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "values" => Ok(StreamMode::Values),
             "updates" => Ok(StreamMode::Updates),
@@ -29,7 +31,9 @@ impl StreamMode {
             _ => Err(format!("Unknown stream mode: {}", s)),
         }
     }
+}
 
+impl StreamMode {
     /// Convert to string
     pub fn to_str(&self) -> &'static str {
         match self {
@@ -38,12 +42,6 @@ impl StreamMode {
             StreamMode::Debug => "debug",
             StreamMode::Multiple(_) => "multiple",
         }
-    }
-}
-
-impl Default for StreamMode {
-    fn default() -> Self {
-        StreamMode::Values
     }
 }
 
@@ -90,12 +88,7 @@ impl StreamChunk {
     }
 
     /// Create an updates chunk (node outputs)
-    pub fn updates(
-        py: Python,
-        node_name: &str,
-        output: PyObject,
-        step: usize,
-    ) -> PyResult<Self> {
+    pub fn updates(py: Python, node_name: &str, output: PyObject, step: usize) -> PyResult<Self> {
         let dict = PyDict::new(py);
         dict.set_item(node_name, output)?;
 
@@ -103,12 +96,7 @@ impl StreamChunk {
     }
 
     /// Create a debug chunk
-    pub fn debug(
-        py: Python,
-        node_name: &str,
-        info: &DebugInfo,
-        step: usize,
-    ) -> PyResult<Self> {
+    pub fn debug(py: Python, node_name: &str, info: &DebugInfo, step: usize) -> PyResult<Self> {
         let dict = PyDict::new(py);
         dict.set_item("type", "task")?;
         dict.set_item("node", node_name)?;
@@ -194,6 +182,7 @@ impl Default for DebugInfo {
 }
 
 /// Stream buffer that accumulates chunks
+#[allow(dead_code)]
 pub struct StreamBuffer {
     chunks: Vec<StreamChunk>,
     mode: StreamMode,
@@ -247,13 +236,11 @@ impl StreamBuffer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     #[test]
     fn test_stream_mode_from_str() {
-        assert_eq!(
-            StreamMode::from_str("values").unwrap(),
-            StreamMode::Values
-        );
+        assert_eq!(StreamMode::from_str("values").unwrap(), StreamMode::Values);
         assert_eq!(
             StreamMode::from_str("updates").unwrap(),
             StreamMode::Updates
@@ -269,6 +256,7 @@ mod tests {
         assert_eq!(StreamMode::Debug.to_str(), "debug");
     }
 
+    #[cfg(feature = "python")]
     #[test]
     fn test_stream_buffer() {
         pyo3::prepare_freethreaded_python();
@@ -289,6 +277,7 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "python")]
     #[test]
     fn test_debug_info() {
         let info = DebugInfo::new()

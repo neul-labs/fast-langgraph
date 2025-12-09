@@ -18,7 +18,9 @@ impl ChannelUpdate {
     }
 
     pub fn single(value: PyObject) -> Self {
-        Self { values: vec![value] }
+        Self {
+            values: vec![value],
+        }
     }
 }
 
@@ -29,6 +31,7 @@ impl ChannelUpdate {
 /// - `get`: Retrieve the current value(s)
 /// - `checkpoint`: Serialize for persistence
 /// - `from_checkpoint`: Restore from serialized state
+#[allow(clippy::wrong_self_convention)]
 pub trait Channel: Send + Sync {
     /// Update the channel with new values
     fn update(&mut self, py: Python, update: ChannelUpdate) -> PyResult<()>;
@@ -219,7 +222,9 @@ mod tests {
 
             // Update with a value
             let value = 42.to_object(py);
-            channel.update(py, ChannelUpdate::single(value.clone_ref(py))).unwrap();
+            channel
+                .update(py, ChannelUpdate::single(value.clone_ref(py)))
+                .unwrap();
 
             assert!(channel.is_available());
             let retrieved = channel.get(py).unwrap();
@@ -227,7 +232,9 @@ mod tests {
 
             // Update with another value - should replace
             let new_value = 84.to_object(py);
-            channel.update(py, ChannelUpdate::single(new_value)).unwrap();
+            channel
+                .update(py, ChannelUpdate::single(new_value))
+                .unwrap();
 
             let retrieved = channel.get(py).unwrap();
             assert_eq!(retrieved.extract::<i32>(py).unwrap(), 84);

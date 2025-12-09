@@ -5,14 +5,15 @@ This module provides functionality to replace core LangGraph algorithm functions
 with high-performance Rust counterparts while maintaining API compatibility.
 """
 
-import sys
 import importlib
-from typing import Any, Dict, Optional, Set
+import sys
 import warnings
+from typing import Any, Dict
 
 # Track what we've patched
 _patched_functions: Dict[str, Any] = {}
 _original_functions: Dict[str, Any] = {}
+
 
 def patch_langgraph() -> bool:
     """
@@ -27,19 +28,16 @@ def patch_langgraph() -> bool:
     """
     try:
         # Import our acceleration shims
-        from .algo_shims import (
-            create_accelerated_apply_writes,
-            create_accelerated_prepare_next_tasks,
-            create_accelerated_read_channels,
-        )
+        from .algo_shims import create_accelerated_apply_writes
+
+        # These are available for future use but currently commented out:
+        # create_accelerated_prepare_next_tasks, create_accelerated_read_channels
 
         patches_applied = []
 
         # Patch apply_writes in _algo module
         if _patch_function(
-            "langgraph.pregel._algo",
-            "apply_writes",
-            create_accelerated_apply_writes
+            "langgraph.pregel._algo", "apply_writes", create_accelerated_apply_writes
         ):
             patches_applied.append("apply_writes")
 
@@ -60,7 +58,7 @@ def patch_langgraph() -> bool:
         #     patches_applied.append("read_channels")
 
         if patches_applied:
-            print(f"✓ Fast LangGraph acceleration enabled:")
+            print("✓ Fast LangGraph acceleration enabled:")
             for func in patches_applied:
                 print(f"  - {func} (Rust-accelerated)")
             return True
@@ -74,8 +72,10 @@ def patch_langgraph() -> bool:
     except Exception as e:
         print(f"✗ Unexpected error during patching: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def unpatch_langgraph() -> bool:
     """
@@ -111,7 +111,10 @@ def unpatch_langgraph() -> bool:
         print(f"✗ Error during unpatching: {e}")
         return False
 
-def _patch_function(module_name: str, func_name: str, accelerator_factory: callable) -> bool:
+
+def _patch_function(
+    module_name: str, func_name: str, accelerator_factory: callable
+) -> bool:
     """
     Internal function to patch a specific function in a module.
 
@@ -133,7 +136,9 @@ def _patch_function(module_name: str, func_name: str, accelerator_factory: calla
 
         # Check if the function exists in the module
         if not hasattr(module, func_name):
-            warnings.warn(f"Function {func_name} not found in {module_name}", RuntimeWarning)
+            warnings.warn(
+                f"Function {func_name} not found in {module_name}", RuntimeWarning
+            )
             return False
 
         # Store the original function for later restoration
@@ -156,7 +161,8 @@ def _patch_function(module_name: str, func_name: str, accelerator_factory: calla
         warnings.warn(f"Failed to patch {module_name}.{func_name}: {e}", RuntimeWarning)
         return False
 
-def is_patched(module_name: str, func_name: str) -> bool:
+
+def is_func_patched(module_name: str, func_name: str) -> bool:
     """
     Check if a specific function has been patched.
 
@@ -169,6 +175,7 @@ def is_patched(module_name: str, func_name: str) -> bool:
     """
     full_func_name = f"{module_name}.{func_name}"
     return full_func_name in _original_functions
+
 
 def get_patch_status() -> Dict[str, bool]:
     """
@@ -186,7 +193,7 @@ def get_patch_status() -> Dict[str, bool]:
     status = {}
     for component in components:
         module_name, func_name = component.rsplit(".", 1)
-        status[component] = is_patched(module_name, func_name)
+        status[component] = is_func_patched(module_name, func_name)
 
     return status
 

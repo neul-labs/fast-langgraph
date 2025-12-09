@@ -22,7 +22,7 @@ impl Send {
     }
 
     /// Create from Python Send object
-    pub fn from_py_send(py: Python, send_obj: &PyAny) -> PyResult<Self> {
+    pub fn from_py_send(_py: Python, send_obj: &PyAny) -> PyResult<Self> {
         let node: String = send_obj.getattr("node")?.extract()?;
         let arg: PyObject = send_obj.getattr("arg")?.extract()?;
         Ok(Self::new(node, arg))
@@ -35,7 +35,9 @@ impl Send {
         let send_class = langgraph.getattr("Send")?;
 
         // Create Send(node, arg)
-        Ok(send_class.call1((self.node.clone(), self.arg.clone_ref(py)))?.into())
+        Ok(send_class
+            .call1((self.node.clone(), self.arg.clone_ref(py)))?
+            .into())
     }
 
     /// Check if a Python object is a Send
@@ -126,10 +128,7 @@ pub fn extract_sends_from_result(py: Python, result: &PyAny) -> PyResult<Vec<Sen
 }
 
 /// Process pending sends and create tasks
-pub fn process_pending_sends(
-    py: Python,
-    pending_sends: &[PyObject],
-) -> PyResult<Vec<Send>> {
+pub fn process_pending_sends(py: Python, pending_sends: &[PyObject]) -> PyResult<Vec<Send>> {
     let mut sends = Vec::new();
 
     for send_obj in pending_sends {

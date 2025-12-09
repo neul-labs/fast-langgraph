@@ -31,7 +31,7 @@ impl ChannelManager {
     }
 
     /// Initialize channels from a dict of channel specs
-    fn init_channels(&mut self, py: Python, channel_specs: &PyDict) -> PyResult<()> {
+    fn init_channels(&mut self, _py: Python, channel_specs: &PyDict) -> PyResult<()> {
         for (key, value) in channel_specs.iter() {
             let key_str: String = key.extract()?;
             self.channels.insert(key_str.clone(), value.into());
@@ -58,11 +58,7 @@ impl ChannelManager {
     ///
     /// This is one of the most frequently called operations in the Pregel loop.
     /// Writes are tuples of (channel_name, value).
-    fn apply_writes_batch(
-        &mut self,
-        py: Python,
-        writes: &PyList,
-    ) -> PyResult<Vec<String>> {
+    fn apply_writes_batch(&mut self, py: Python, writes: &PyList) -> PyResult<Vec<String>> {
         let mut updated_channels = Vec::new();
 
         // Group writes by channel
@@ -195,7 +191,10 @@ impl TaskScheduler {
 
     /// Get the input channels for a node
     fn get_node_inputs(&self, node_name: &str) -> Vec<String> {
-        self.subscriptions.get(node_name).cloned().unwrap_or_default()
+        self.subscriptions
+            .get(node_name)
+            .cloned()
+            .unwrap_or_default()
     }
 }
 
@@ -223,12 +222,7 @@ impl PregelAccelerator {
     }
 
     /// Initialize the accelerator with channels and nodes
-    fn initialize(
-        &mut self,
-        py: Python,
-        channels: &PyDict,
-        nodes: &PyDict,
-    ) -> PyResult<()> {
+    fn initialize(&mut self, py: Python, channels: &PyDict, nodes: &PyDict) -> PyResult<()> {
         // Initialize channels
         self.channel_manager.init_channels(py, channels)?;
 
@@ -250,7 +244,8 @@ impl PregelAccelerator {
                 vec![]
             };
 
-            self.task_scheduler.register_node(node_name, triggers, channels)?;
+            self.task_scheduler
+                .register_node(node_name, triggers, channels)?;
         }
 
         Ok(())
@@ -259,27 +254,24 @@ impl PregelAccelerator {
     /// Execute one step of the Pregel loop
     ///
     /// Returns (tasks_to_run, should_continue)
-    fn execute_step(
-        &mut self,
-        py: Python,
-        writes: &PyList,
-    ) -> PyResult<(Vec<String>, bool)> {
+    fn execute_step(&mut self, py: Python, writes: &PyList) -> PyResult<(Vec<String>, bool)> {
         // Check recursion limit
         if self.step >= self.max_steps {
             // Raise GraphRecursionError
             let result = py
                 .import("langgraph.errors")
                 .and_then(|m| m.getattr("GraphRecursionError"))
-                .and_then(|exc_class| exc_class.call1((
-                    format!("Recursion limit of {} exceeded", self.max_steps),
-                )));
+                .and_then(|exc_class| {
+                    exc_class.call1((format!("Recursion limit of {} exceeded", self.max_steps),))
+                });
 
             match result {
                 Ok(exc) => return Err(pyo3::PyErr::from_value(exc)),
                 Err(_) => {
-                    return Err(pyo3::exceptions::PyRuntimeError::new_err(
-                        format!("Recursion limit of {} exceeded", self.max_steps)
-                    ))
+                    return Err(pyo3::exceptions::PyRuntimeError::new_err(format!(
+                        "Recursion limit of {} exceeded",
+                        self.max_steps
+                    )))
                 }
             }
         }

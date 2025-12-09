@@ -13,14 +13,14 @@ fn benchmark_channel_operations(c: &mut Criterion) {
             let _ = channel.update(vec![42]);
         })
     });
-    
+
     c.bench_function("last_value_channel_get", |b| {
         let channel = LastValueChannel::with_value(42);
         b.iter(|| {
             let _ = channel.get();
         })
     });
-    
+
     c.bench_function("topic_channel_update", |b| {
         b.iter(|| {
             let mut channel = TopicChannel::<i32>::new(true);
@@ -36,68 +36,86 @@ fn benchmark_checkpoint_operations(c: &mut Criterion) {
             std::hint::black_box(checkpoint);
         })
     });
-    
+
     c.bench_function("checkpoint_json_serialization", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test".to_string(), serde_json::Value::String("value".to_string()));
-        
+        checkpoint.channel_values.insert(
+            "test".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
+
         b.iter(|| {
             let json = checkpoint.to_json().unwrap();
             std::hint::black_box(json);
         })
     });
-    
+
     c.bench_function("checkpoint_json_deserialization", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test".to_string(), serde_json::Value::String("value".to_string()));
+        checkpoint.channel_values.insert(
+            "test".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
         let json = checkpoint.to_json().unwrap();
-        
+
         b.iter(|| {
             let deserialized = Checkpoint::from_json(&json).unwrap();
             std::hint::black_box(deserialized);
         })
     });
-    
+
     #[cfg(feature = "msgpack")]
     c.bench_function("checkpoint_msgpack_serialization", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test".to_string(), serde_json::Value::String("value".to_string()));
-        
+        checkpoint.channel_values.insert(
+            "test".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
+
         b.iter(|| {
             let data = checkpoint.to_msgpack().unwrap();
             std::hint::black_box(data);
         })
     });
-    
+
     #[cfg(feature = "msgpack")]
     c.bench_function("checkpoint_msgpack_deserialization", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test".to_string(), serde_json::Value::String("value".to_string()));
+        checkpoint.channel_values.insert(
+            "test".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
         let data = checkpoint.to_msgpack().unwrap();
-        
+
         b.iter(|| {
             let deserialized = Checkpoint::from_msgpack(&data).unwrap();
             std::hint::black_box(deserialized);
         })
     });
-    
+
     #[cfg(feature = "compression")]
     c.bench_function("checkpoint_compressed_serialization", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test".to_string(), serde_json::Value::String("value".to_string()));
-        
+        checkpoint.channel_values.insert(
+            "test".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
+
         b.iter(|| {
             let data = checkpoint.to_compressed_json().unwrap();
             std::hint::black_box(data);
         })
     });
-    
+
     #[cfg(feature = "compression")]
     c.bench_function("checkpoint_compressed_deserialization", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test".to_string(), serde_json::Value::String("value".to_string()));
+        checkpoint.channel_values.insert(
+            "test".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
         let data = checkpoint.to_compressed_json().unwrap();
-        
+
         b.iter(|| {
             let deserialized = Checkpoint::from_compressed_json(&data).unwrap();
             std::hint::black_box(deserialized);
@@ -112,7 +130,7 @@ fn benchmark_pregel_execution(c: &mut Criterion) {
             std::hint::black_box(executor);
         })
     });
-    
+
     c.bench_function("pregel_node_creation", |b| {
         b.iter(|| {
             let node = PregelNode {
@@ -129,22 +147,40 @@ fn benchmark_pregel_execution(c: &mut Criterion) {
 fn benchmark_memory_usage(c: &mut Criterion) {
     c.bench_function("checkpoint_memory_usage", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test1".to_string(), serde_json::Value::String("value1".to_string()));
-        checkpoint.channel_values.insert("test2".to_string(), serde_json::Value::String("value2".to_string()));
-        checkpoint.channel_values.insert("test3".to_string(), serde_json::Value::String("value3".to_string()));
-        
+        checkpoint.channel_values.insert(
+            "test1".to_string(),
+            serde_json::Value::String("value1".to_string()),
+        );
+        checkpoint.channel_values.insert(
+            "test2".to_string(),
+            serde_json::Value::String("value2".to_string()),
+        );
+        checkpoint.channel_values.insert(
+            "test3".to_string(),
+            serde_json::Value::String("value3".to_string()),
+        );
+
         b.iter(|| {
             let usage = checkpoint.memory_usage();
             std::hint::black_box(usage);
         })
     });
-    
+
     c.bench_function("checkpoint_serialized_size", |b| {
         let mut checkpoint = Checkpoint::new();
-        checkpoint.channel_values.insert("test1".to_string(), serde_json::Value::String("value1".to_string()));
-        checkpoint.channel_values.insert("test2".to_string(), serde_json::Value::String("value2".to_string()));
-        checkpoint.channel_values.insert("test3".to_string(), serde_json::Value::String("value3".to_string()));
-        
+        checkpoint.channel_values.insert(
+            "test1".to_string(),
+            serde_json::Value::String("value1".to_string()),
+        );
+        checkpoint.channel_values.insert(
+            "test2".to_string(),
+            serde_json::Value::String("value2".to_string()),
+        );
+        checkpoint.channel_values.insert(
+            "test3".to_string(),
+            serde_json::Value::String("value3".to_string()),
+        );
+
         b.iter(|| {
             let size = checkpoint.serialized_size().unwrap();
             std::hint::black_box(size);
@@ -152,5 +188,11 @@ fn benchmark_memory_usage(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, benchmark_channel_operations, benchmark_checkpoint_operations, benchmark_pregel_execution, benchmark_memory_usage);
+criterion_group!(
+    benches,
+    benchmark_channel_operations,
+    benchmark_checkpoint_operations,
+    benchmark_pregel_execution,
+    benchmark_memory_usage
+);
 criterion_main!(benches);

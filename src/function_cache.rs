@@ -1,18 +1,17 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyTuple, PyBytes};
+use pyo3::types::{PyBytes, PyDict, PyTuple};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
 
 /// Fast function result caching with LRU eviction
 ///
 /// This provides a high-performance memoization layer for expensive
 /// function calls, reducing redundant computation in hot paths.
-
 /// Cached function result with hit tracking
 #[derive(Clone)]
 struct CachedResult {
-    result: Vec<u8>,  // Pickled Python object
+    result: Vec<u8>, // Pickled Python object
     hits: usize,
     timestamp: f64,
 }
@@ -60,7 +59,12 @@ impl RustFunctionCache {
     }
 
     /// Get cached result if available
-    fn get(&mut self, py: Python, args: &PyTuple, kwargs: Option<&PyDict>) -> PyResult<Option<PyObject>> {
+    fn get(
+        &mut self,
+        py: Python,
+        args: &PyTuple,
+        kwargs: Option<&PyDict>,
+    ) -> PyResult<Option<PyObject>> {
         let hash = self.hash_args(py, args, kwargs)?;
 
         if let Some(cached) = self.cache.get_mut(&hash) {
@@ -81,7 +85,13 @@ impl RustFunctionCache {
 
     /// Store result in cache
     #[pyo3(signature = (args, result, kwargs=None))]
-    fn put(&mut self, py: Python, args: &PyTuple, result: PyObject, kwargs: Option<&PyDict>) -> PyResult<()> {
+    fn put(
+        &mut self,
+        py: Python,
+        args: &PyTuple,
+        result: PyObject,
+        kwargs: Option<&PyDict>,
+    ) -> PyResult<()> {
         let hash = self.hash_args(py, args, kwargs)?;
 
         // Serialize result
@@ -92,8 +102,7 @@ impl RustFunctionCache {
         // LRU eviction if cache is full
         if self.cache.len() >= self.max_size && !self.cache.contains_key(&hash) {
             // Find least recently used (lowest hits)
-            if let Some((&key_to_remove, _)) = self.cache.iter()
-                .min_by_key(|(_, v)| v.hits) {
+            if let Some((&key_to_remove, _)) = self.cache.iter().min_by_key(|(_, v)| v.hits) {
                 self.cache.remove(&key_to_remove);
             }
         }
@@ -102,11 +111,14 @@ impl RustFunctionCache {
         let time = py.import("time")?;
         let timestamp: f64 = time.getattr("time")?.call0()?.extract()?;
 
-        self.cache.insert(hash, CachedResult {
-            result: serialized.as_bytes().to_vec(),
-            hits: 0,
-            timestamp,
-        });
+        self.cache.insert(
+            hash,
+            CachedResult {
+                result: serialized.as_bytes().to_vec(),
+                hits: 0,
+                timestamp,
+            },
+        );
 
         Ok(())
     }
@@ -145,7 +157,12 @@ impl RustFunctionCache {
     }
 
     /// Invalidate specific cache entry
-    fn invalidate(&mut self, py: Python, args: &PyTuple, kwargs: Option<&PyDict>) -> PyResult<bool> {
+    fn invalidate(
+        &mut self,
+        py: Python,
+        args: &PyTuple,
+        kwargs: Option<&PyDict>,
+    ) -> PyResult<bool> {
         let hash = self.hash_args(py, args, kwargs)?;
         Ok(self.cache.remove(&hash).is_some())
     }
@@ -227,7 +244,12 @@ impl CachedDecorator {
     }
 
     /// Check if result is cached
-    fn cache_contains(&self, py: Python, args: &PyTuple, kwargs: Option<&PyDict>) -> PyResult<bool> {
+    fn cache_contains(
+        &self,
+        py: Python,
+        args: &PyTuple,
+        kwargs: Option<&PyDict>,
+    ) -> PyResult<bool> {
         self.cache.borrow(py).contains(py, args, kwargs)
     }
 
@@ -253,7 +275,7 @@ impl CachedDecorator {
 pub struct RustTTLCache {
     cache: HashMap<u64, CachedResult>,
     max_size: usize,
-    ttl: f64,  // Time to live in seconds
+    ttl: f64, // Time to live in seconds
     hits: usize,
     misses: usize,
 }
@@ -291,7 +313,12 @@ impl RustTTLCache {
     }
 
     /// Get cached result if not expired
-    fn get(&mut self, py: Python, args: &PyTuple, kwargs: Option<&PyDict>) -> PyResult<Option<PyObject>> {
+    fn get(
+        &mut self,
+        py: Python,
+        args: &PyTuple,
+        kwargs: Option<&PyDict>,
+    ) -> PyResult<Option<PyObject>> {
         let hash = self.hash_args(py, args, kwargs)?;
 
         // Get current time
@@ -324,7 +351,13 @@ impl RustTTLCache {
 
     /// Store result in cache
     #[pyo3(signature = (args, result, kwargs=None))]
-    fn put(&mut self, py: Python, args: &PyTuple, result: PyObject, kwargs: Option<&PyDict>) -> PyResult<()> {
+    fn put(
+        &mut self,
+        py: Python,
+        args: &PyTuple,
+        result: PyObject,
+        kwargs: Option<&PyDict>,
+    ) -> PyResult<()> {
         let hash = self.hash_args(py, args, kwargs)?;
 
         let pickle = py.import("pickle")?;
@@ -333,8 +366,7 @@ impl RustTTLCache {
 
         // LRU eviction if full
         if self.cache.len() >= self.max_size && !self.cache.contains_key(&hash) {
-            if let Some((&key_to_remove, _)) = self.cache.iter()
-                .min_by_key(|(_, v)| v.hits) {
+            if let Some((&key_to_remove, _)) = self.cache.iter().min_by_key(|(_, v)| v.hits) {
                 self.cache.remove(&key_to_remove);
             }
         }
@@ -342,11 +374,14 @@ impl RustTTLCache {
         let time = py.import("time")?;
         let timestamp: f64 = time.getattr("time")?.call0()?.extract()?;
 
-        self.cache.insert(hash, CachedResult {
-            result: serialized.as_bytes().to_vec(),
-            hits: 0,
-            timestamp,
-        });
+        self.cache.insert(
+            hash,
+            CachedResult {
+                result: serialized.as_bytes().to_vec(),
+                hits: 0,
+                timestamp,
+            },
+        );
 
         Ok(())
     }
@@ -384,7 +419,9 @@ impl RustTTLCache {
         let time = py.import("time")?;
         let now: f64 = time.getattr("time")?.call0()?.extract()?;
 
-        let expired_keys: Vec<u64> = self.cache.iter()
+        let expired_keys: Vec<u64> = self
+            .cache
+            .iter()
             .filter(|(_, v)| now - v.timestamp > self.ttl)
             .map(|(k, _)| *k)
             .collect();

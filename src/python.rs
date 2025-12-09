@@ -1,9 +1,12 @@
+#![allow(unused_variables)]
+#![allow(clippy::too_many_arguments)]
+
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyType, PyTuple};
+use pyo3::types::{PyDict, PyList, PyTuple, PyType};
 use std::collections::HashMap;
 
 // Import our Rust core modules
-use crate::pregel_loop::{PregelLoop, PregelConfig};
+use crate::pregel_loop::{PregelConfig, PregelLoop};
 use crate::pregel_node::PregelNode;
 
 /// BaseChannel provides the base interface for all channels
@@ -25,73 +28,79 @@ impl BaseChannel {
             key: key.unwrap_or_default(),
         })
     }
-    
+
     /// Get the ValueType property
     #[getter]
     fn value_type(&self, py: Python) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual value type
         Ok(self.typ.clone_ref(py))
     }
-    
+
     /// Get the UpdateType property
     #[getter]
     fn update_type(&self, py: Python) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual update type
         Ok(self.typ.clone_ref(py))
     }
-    
+
     /// Return a copy of the channel
     fn copy(&self, py: Python) -> PyResult<Py<Self>> {
-        Py::new(py, BaseChannel {
-            typ: self.typ.clone_ref(py),
-            key: self.key.clone(),
-        })
+        Py::new(
+            py,
+            BaseChannel {
+                typ: self.typ.clone_ref(py),
+                key: self.key.clone(),
+            },
+        )
     }
-    
+
     /// Return a serializable representation of the channel's current state
     fn checkpoint(&self, py: Python) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual checkpoint
         Ok(py.None())
     }
-    
+
     /// Return a new identical channel, optionally initialized from a checkpoint
     #[classmethod]
     fn from_checkpoint(_cls: &PyType, py: Python, _checkpoint: PyObject) -> PyResult<Py<Self>> {
         // In a real implementation, this would create a channel from a checkpoint
-        Py::new(py, BaseChannel {
-            typ: py.None(),
-            key: String::new(),
-        })
+        Py::new(
+            py,
+            BaseChannel {
+                typ: py.None(),
+                key: String::new(),
+            },
+        )
     }
-    
+
     /// Return the current value of the channel
     fn get(&self, _py: Python) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual value
         Err(pyo3::exceptions::PyNotImplementedError::new_err(
-            "get() method must be implemented by subclasses"
+            "get() method must be implemented by subclasses",
         ))
     }
-    
+
     /// Return True if the channel is available (not empty), False otherwise
     fn is_available(&self) -> bool {
         // In a real implementation, this would check actual availability
         false
     }
-    
+
     /// Update the channel's value with the given sequence of updates
     fn update(&mut self, _py: Python, _values: &PyList) -> PyResult<bool> {
         // In a real implementation, this would update with actual values
         Err(pyo3::exceptions::PyNotImplementedError::new_err(
-            "update() method must be implemented by subclasses"
+            "update() method must be implemented by subclasses",
         ))
     }
-    
+
     /// Notify the channel that a subscribed task ran
     fn consume(&mut self) -> bool {
         // In a real implementation, this would handle consumption
         false
     }
-    
+
     /// Notify the channel that the Pregel run is finishing
     fn finish(&mut self) -> bool {
         // In a real implementation, this would handle finishing
@@ -120,10 +129,10 @@ impl LastValue {
             value: None,
         })
     }
-    
+
     /// Update the channel with new values
     fn update(&mut self, py: Python, values: &PyList) -> PyResult<bool> {
-        if values.len() == 0 {
+        if values.is_empty() {
             return Ok(false);
         }
 
@@ -140,7 +149,7 @@ impl LastValue {
                 Ok(exc) => return Err(pyo3::PyErr::from_value(exc)),
                 Err(_) => {
                     return Err(pyo3::exceptions::PyValueError::new_err(
-                        "LastValue channel can only receive one value per update"
+                        "LastValue channel can only receive one value per update",
                     ))
                 }
             }
@@ -149,7 +158,7 @@ impl LastValue {
         self.value = Some(values.get_item(0)?.into());
         Ok(true)
     }
-    
+
     /// Get the current value
     fn get(&self, py: Python) -> PyResult<PyObject> {
         match &self.value {
@@ -166,29 +175,29 @@ impl LastValue {
                     Err(_) => {
                         // Fallback to ValueError if EmptyChannelError not available
                         Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                            "Channel is empty"
+                            "Channel is empty",
                         ))
                     }
                 }
             }
         }
     }
-    
+
     /// Check if channel is available
     fn is_available(&self) -> bool {
         self.value.is_some()
     }
-    
+
     /// Consume the channel (no-op for LastValue)
     fn consume(&mut self) -> bool {
         false
     }
-    
+
     /// Finish the channel (no-op for LastValue)
     fn finish(&mut self) -> bool {
         false
     }
-    
+
     /// Create a checkpoint
     fn checkpoint(&self, py: Python) -> PyResult<PyObject> {
         match &self.value {
@@ -196,8 +205,9 @@ impl LastValue {
             None => Ok(py.None()),
         }
     }
-    
+
     /// Create from checkpoint
+    #[allow(clippy::wrong_self_convention)]
     fn from_checkpoint(&self, py: Python, checkpoint: PyObject) -> PyResult<Py<Self>> {
         // Check if checkpoint is MISSING sentinel or None
         let is_missing = checkpoint.is_none(py) || {
@@ -209,32 +219,33 @@ impl LastValue {
                     .unwrap_or(false)
             };
 
-            check_missing("langgraph._internal._typing") ||
-            check_missing("langgraph.constants")
+            check_missing("langgraph._internal._typing") || check_missing("langgraph.constants")
         };
 
-        let value = if is_missing {
-            None
-        } else {
-            Some(checkpoint)
-        };
+        let value = if is_missing { None } else { Some(checkpoint) };
 
-        Py::new(py, LastValue {
-            typ: self.typ.clone_ref(py),
-            key: self.key.clone(),
-            value,
-        })
+        Py::new(
+            py,
+            LastValue {
+                typ: self.typ.clone_ref(py),
+                key: self.key.clone(),
+                value,
+            },
+        )
     }
-    
+
     /// Return a copy of the channel
     fn copy(&self, py: Python) -> PyResult<Py<Self>> {
-        Py::new(py, LastValue {
-            typ: self.typ.clone_ref(py),
-            key: self.key.clone(),
-            value: self.value.clone(),
-        })
+        Py::new(
+            py,
+            LastValue {
+                typ: self.typ.clone_ref(py),
+                key: self.key.clone(),
+                value: self.value.clone(),
+            },
+        )
     }
-    
+
     /// Get the ValueType property
     #[getter]
     fn value_type(&self, py: Python) -> PyResult<PyObject> {
@@ -244,6 +255,7 @@ impl LastValue {
 
     /// Get the ValueType property (capitalized for compatibility)
     #[getter]
+    #[allow(non_snake_case)]
     fn ValueType(&self, py: Python) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual value type
         Ok(self.typ.clone_ref(py))
@@ -258,6 +270,7 @@ impl LastValue {
 
     /// Get the UpdateType property (capitalized for compatibility)
     #[getter]
+    #[allow(non_snake_case)]
     fn UpdateType(&self, py: Python) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual update type
         Ok(self.typ.clone_ref(py))
@@ -331,23 +344,27 @@ impl Checkpoint {
     fn from_json(_cls: &PyType, py: Python, _json_str: &str) -> PyResult<Py<Self>> {
         // In a real implementation, this would deserialize from JSON
         // For now, we'll create a simple checkpoint
-        Py::new(py, Checkpoint::new(
-            py, 1, None, None, None, None, None, None, None
-        )?)
+        Py::new(
+            py,
+            Checkpoint::new(py, 1, None, None, None, None, None, None, None)?,
+        )
     }
 
     /// Create a copy of the checkpoint
     fn copy(&self, py: Python) -> PyResult<Py<Self>> {
-        Py::new(py, Checkpoint {
-            v: self.v,
-            id: self.id.clone(),
-            ts: self.ts.clone(),
-            channel_values: self.channel_values.clone_ref(py),
-            channel_versions: self.channel_versions.clone_ref(py),
-            versions_seen: self.versions_seen.clone_ref(py),
-            pending_sends: self.pending_sends.clone_ref(py),
-            current_tasks: self.current_tasks.clone_ref(py),
-        })
+        Py::new(
+            py,
+            Checkpoint {
+                v: self.v,
+                id: self.id.clone(),
+                ts: self.ts.clone(),
+                channel_values: self.channel_values.clone_ref(py),
+                channel_versions: self.channel_versions.clone_ref(py),
+                versions_seen: self.versions_seen.clone_ref(py),
+                pending_sends: self.pending_sends.clone_ref(py),
+                current_tasks: self.current_tasks.clone_ref(py),
+            },
+        )
     }
 
     /// Support dict-like access for compatibility
@@ -361,7 +378,10 @@ impl Checkpoint {
             "versions_seen" => Ok(self.versions_seen.clone_ref(py)),
             "pending_sends" => Ok(self.pending_sends.clone_ref(py)),
             "current_tasks" => Ok(self.current_tasks.clone_ref(py)),
-            _ => Err(PyErr::new::<pyo3::exceptions::PyKeyError, _>(format!("Key not found: {}", key))),
+            _ => Err(PyErr::new::<pyo3::exceptions::PyKeyError, _>(format!(
+                "Key not found: {}",
+                key
+            ))),
         }
     }
 
@@ -375,14 +395,12 @@ impl Checkpoint {
 }
 
 /// Helper function to extract node metadata and create PregelNode
-fn extract_pregel_node(
-    py: Python,
-    node_name: &str,
-    node_obj: &PyObject,
-) -> PyResult<PregelNode> {
+fn extract_pregel_node(py: Python, node_name: &str, node_obj: &PyObject) -> PyResult<PregelNode> {
     // Extract triggers (channels this node depends on)
     let triggers = if let Ok(triggers_attr) = node_obj.getattr(py, "triggers") {
-        triggers_attr.extract::<Vec<String>>(py).unwrap_or_else(|_| vec![node_name.to_string()])
+        triggers_attr
+            .extract::<Vec<String>>(py)
+            .unwrap_or_else(|_| vec![node_name.to_string()])
     } else {
         vec![node_name.to_string()]
     };
@@ -396,17 +414,16 @@ fn extract_pregel_node(
 
     // Extract retry policy if available
     let retry_policy = if let Ok(retry_attr) = node_obj.getattr(py, "retry_policy") {
-        Some(crate::pregel_node::RetryPolicyConfig::from_py_object(py, &retry_attr)?)
+        Some(crate::pregel_node::RetryPolicyConfig::from_py_object(
+            py,
+            &retry_attr,
+        )?)
     } else {
         None
     };
 
     // Extract config if available
-    let config = if let Ok(config_attr) = node_obj.getattr(py, "config") {
-        Some(config_attr.into())
-    } else {
-        None
-    };
+    let config = node_obj.getattr(py, "config").ok();
 
     Ok(PregelNode {
         runnable: node_obj.clone_ref(py),
@@ -446,11 +463,7 @@ impl Pregel {
     /// All parameters are optional to support subclassing
     #[new]
     #[pyo3(signature = (*_args, **kwargs))]
-    fn new(
-        _py: Python,
-        _args: &PyTuple,
-        kwargs: Option<&PyDict>,
-    ) -> PyResult<Self> {
+    fn new(_py: Python, _args: &PyTuple, kwargs: Option<&PyDict>) -> PyResult<Self> {
         // Extract parameters from kwargs with defaults
         let stream_mode = kwargs
             .and_then(|kw| kw.get_item("stream_mode").ok().flatten())
@@ -503,11 +516,7 @@ impl Pregel {
 
     /// Initialize method that accepts kwargs for subclassing support
     #[pyo3(signature = (*_args, **_kwargs))]
-    fn __init__(
-        &mut self,
-        _args: &PyTuple,
-        _kwargs: Option<&PyDict>,
-    ) -> PyResult<()> {
+    fn __init__(&mut self, _args: &PyTuple, _kwargs: Option<&PyDict>) -> PyResult<()> {
         // Do nothing - all initialization happens in __new__
         // This method exists solely to satisfy Python's subclassing mechanism
         Ok(())
@@ -538,13 +547,13 @@ impl Pregel {
         debug: Option<PyObject>,
     ) -> PyResult<PyObject> {
         // NEW: Try to use Rust PregelLoop if we have the right structure
-        if !self.nodes.is_empty() && self.nodes.len() > 0 {
+        if !self.nodes.is_empty() {
             // Check if nodes look like PregelNodes (have metadata)
             let first_node = self.nodes.values().next();
             let use_rust_loop = if let Some(node_obj) = first_node {
                 // Check if this looks like a wrapped node with metadata
-                node_obj.as_ref(py).hasattr("triggers").unwrap_or(false) ||
-                node_obj.as_ref(py).hasattr("channels").unwrap_or(false)
+                node_obj.as_ref(py).hasattr("triggers").unwrap_or(false)
+                    || node_obj.as_ref(py).hasattr("channels").unwrap_or(false)
             } else {
                 false
             };
@@ -555,7 +564,7 @@ impl Pregel {
                     input,
                     interrupt_before,
                     interrupt_after,
-                    debug
+                    debug,
                 );
             }
         }
@@ -565,11 +574,12 @@ impl Pregel {
             // Extract recursion_limit from config
             let recursion_limit = if let Some(ref cfg) = config {
                 if let Ok(cfg_dict) = cfg.downcast::<PyDict>(py) {
-                    cfg_dict.get_item("recursion_limit")
+                    cfg_dict
+                        .get_item("recursion_limit")
                         .ok()
                         .flatten()
                         .and_then(|v| v.extract::<usize>().ok())
-                        .unwrap_or(25)  // Default recursion limit
+                        .unwrap_or(25) // Default recursion limit
                 } else {
                     25
                 }
@@ -583,16 +593,18 @@ impl Pregel {
                 let result = py
                     .import("langgraph.errors")
                     .and_then(|m| m.getattr("GraphRecursionError"))
-                    .and_then(|exc_class| exc_class.call1((
-                        format!("Recursion limit of {} exceeded", recursion_limit),
-                    )));
+                    .and_then(|exc_class| {
+                        exc_class
+                            .call1((format!("Recursion limit of {} exceeded", recursion_limit),))
+                    });
 
                 match result {
                     Ok(exc) => return Err(pyo3::PyErr::from_value(exc)),
                     Err(_) => {
-                        return Err(pyo3::exceptions::PyRuntimeError::new_err(
-                            format!("Recursion limit of {} exceeded", recursion_limit)
-                        ))
+                        return Err(pyo3::exceptions::PyRuntimeError::new_err(format!(
+                            "Recursion limit of {} exceeded",
+                            recursion_limit
+                        )))
                     }
                 }
             }
@@ -645,7 +657,7 @@ impl Pregel {
                                     built_func.call1(py, (current_state.clone_ref(py),))
                                 }
                             }
-                            Err(e) => Err(e)
+                            Err(e) => Err(e),
                         }
                     } else if let Ok(invoke_method) = node_func.getattr(py, "invoke") {
                         // RunnableLike with invoke method
@@ -750,7 +762,7 @@ impl Pregel {
         // Fallback: simple pass-through
         Ok(input)
     }
-    
+
     /// Stream graph steps for a single input
     fn stream(
         &self,
@@ -771,8 +783,8 @@ impl Pregel {
         if !self.nodes.is_empty() {
             let first_node = self.nodes.values().next();
             let use_rust_loop = if let Some(node_obj) = first_node {
-                node_obj.as_ref(py).hasattr("triggers").unwrap_or(false) ||
-                node_obj.as_ref(py).hasattr("channels").unwrap_or(false)
+                node_obj.as_ref(py).hasattr("triggers").unwrap_or(false)
+                    || node_obj.as_ref(py).hasattr("channels").unwrap_or(false)
             } else {
                 false
             };
@@ -783,7 +795,7 @@ impl Pregel {
                     input,
                     interrupt_before,
                     interrupt_after,
-                    debug
+                    debug,
                 );
             }
         }
@@ -791,7 +803,7 @@ impl Pregel {
         // FALLBACK: Return empty list for backwards compatibility
         Ok(PyList::empty(py).into())
     }
-    
+
     /// Asynchronously invoke the graph on a single input
     fn ainvoke(
         &self,
@@ -868,7 +880,10 @@ impl Pregel {
 
             // Try to extract as a list first (for dict-style inputs)
             if let Ok(channel_names) = input_channels.extract::<Vec<String>>(py) {
-                eprintln!("DEBUG input_schema: input_channels is a list with {} items", channel_names.len());
+                eprintln!(
+                    "DEBUG input_schema: input_channels is a list with {} items",
+                    channel_names.len()
+                );
                 // Multiple channels - create object schema with properties
                 let mut properties = std::collections::HashMap::new();
 
@@ -876,7 +891,8 @@ impl Pregel {
                     if let Some(channel) = self.channels.get(channel_name) {
                         if let Ok(channel_type) = channel.getattr(py, "typ") {
                             let type_name = if let Ok(name) = channel_type.getattr(py, "__name__") {
-                                name.extract::<String>(py).unwrap_or_else(|_| "object".to_string())
+                                name.extract::<String>(py)
+                                    .unwrap_or_else(|_| "object".to_string())
                             } else {
                                 "object".to_string()
                             };
@@ -891,7 +907,10 @@ impl Pregel {
                                 _ => "object",
                             };
 
-                            properties.insert(channel_name.clone(), (json_type.to_string(), channel_name.clone()));
+                            properties.insert(
+                                channel_name.clone(),
+                                (json_type.to_string(), channel_name.clone()),
+                            );
                         }
                     }
                 }
@@ -909,23 +928,30 @@ impl Pregel {
                             let mut chars = word.chars();
                             match chars.next() {
                                 None => String::new(),
-                                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                                Some(first) => {
+                                    first.to_uppercase().collect::<String>() + chars.as_str()
+                                }
                             }
                         })
                         .collect::<Vec<_>>()
                         .join(" ");
-                    props_code.push_str(&format!("'{}': {{'title': '{}', 'type': '{}', 'default': None}}",
-                        name, title_case, json_type));
+                    props_code.push_str(&format!(
+                        "'{}': {{'title': '{}', 'type': '{}', 'default': None}}",
+                        name, title_case, json_type
+                    ));
                 }
                 props_code.push('}');
 
-                let code = format!(r#"
+                let code = format!(
+                    r#"
 class InputSchema(dict):
     @classmethod
     def model_json_schema(cls):
         return {{"title": "LangGraphInput", "type": "object", "properties": {}}}
 InputSchema
-"#, props_code);
+"#,
+                    props_code
+                );
                 let locals = PyDict::new(py);
                 py.run(&code, None, Some(locals))?;
                 let schema = locals.get_item("InputSchema")?.ok_or_else(|| {
@@ -945,7 +971,9 @@ InputSchema
                         eprintln!("DEBUG input_schema: Got channel.typ");
                         // Get the type name - channel_type IS the type (e.g., int, str, etc.)
                         let type_name = if let Ok(name) = channel_type.getattr(py, "__name__") {
-                            let n = name.extract::<String>(py).unwrap_or_else(|_| "object".to_string());
+                            let n = name
+                                .extract::<String>(py)
+                                .unwrap_or_else(|_| "object".to_string());
                             eprintln!("DEBUG input_schema: type_name={}", n);
                             n
                         } else {
@@ -968,24 +996,32 @@ InputSchema
                         eprintln!("DEBUG input_schema: json_type={}", json_type);
 
                         // Create a Pydantic-like schema class
-                        let code = format!(r#"
+                        let code = format!(
+                            r#"
 class InputSchema(dict):
     @classmethod
     def model_json_schema(cls):
         return {{"title": "LangGraphInput", "type": "{}"}}
 InputSchema
-"#, json_type);
+"#,
+                            json_type
+                        );
                         let locals = PyDict::new(py);
                         py.run(&code, None, Some(locals))?;
                         let schema = locals.get_item("InputSchema")?.ok_or_else(|| {
-                            pyo3::exceptions::PyRuntimeError::new_err("Failed to create InputSchema")
+                            pyo3::exceptions::PyRuntimeError::new_err(
+                                "Failed to create InputSchema",
+                            )
                         })?;
                         return Ok(schema.into());
                     } else {
                         eprintln!("DEBUG input_schema: Failed to get typ attr");
                     }
                 } else {
-                    eprintln!("DEBUG input_schema: Channel '{}' not found in self.channels", channel_name);
+                    eprintln!(
+                        "DEBUG input_schema: Channel '{}' not found in self.channels",
+                        channel_name
+                    );
                 }
             } else {
                 eprintln!("DEBUG input_schema: Failed to extract channel_name as string");
@@ -1026,7 +1062,8 @@ MockSchema
                     if let Some(channel) = self.channels.get(channel_name) {
                         if let Ok(channel_type) = channel.getattr(py, "typ") {
                             let type_name = if let Ok(name) = channel_type.getattr(py, "__name__") {
-                                name.extract::<String>(py).unwrap_or_else(|_| "object".to_string())
+                                name.extract::<String>(py)
+                                    .unwrap_or_else(|_| "object".to_string())
                             } else {
                                 "object".to_string()
                             };
@@ -1041,7 +1078,10 @@ MockSchema
                                 _ => "object",
                             };
 
-                            properties.insert(channel_name.clone(), (json_type.to_string(), channel_name.clone()));
+                            properties.insert(
+                                channel_name.clone(),
+                                (json_type.to_string(), channel_name.clone()),
+                            );
                         }
                     }
                 }
@@ -1059,23 +1099,30 @@ MockSchema
                             let mut chars = word.chars();
                             match chars.next() {
                                 None => String::new(),
-                                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                                Some(first) => {
+                                    first.to_uppercase().collect::<String>() + chars.as_str()
+                                }
                             }
                         })
                         .collect::<Vec<_>>()
                         .join(" ");
-                    props_code.push_str(&format!("'{}': {{'title': '{}', 'type': '{}', 'default': None}}",
-                        name, title_case, json_type));
+                    props_code.push_str(&format!(
+                        "'{}': {{'title': '{}', 'type': '{}', 'default': None}}",
+                        name, title_case, json_type
+                    ));
                 }
                 props_code.push('}');
 
-                let code = format!(r#"
+                let code = format!(
+                    r#"
 class OutputSchema(dict):
     @classmethod
     def model_json_schema(cls):
         return {{"title": "LangGraphOutput", "type": "object", "properties": {}}}
 OutputSchema
-"#, props_code);
+"#,
+                    props_code
+                );
                 let locals = PyDict::new(py);
                 py.run(&code, None, Some(locals))?;
                 let schema = locals.get_item("OutputSchema")?.ok_or_else(|| {
@@ -1092,7 +1139,8 @@ OutputSchema
                     if let Ok(channel_type) = channel.getattr(py, "typ") {
                         // Get the type name
                         let type_name = if let Ok(name) = channel_type.getattr(py, "__name__") {
-                            name.extract::<String>(py).unwrap_or_else(|_| "object".to_string())
+                            name.extract::<String>(py)
+                                .unwrap_or_else(|_| "object".to_string())
                         } else {
                             "object".to_string()
                         };
@@ -1109,17 +1157,22 @@ OutputSchema
                         };
 
                         // Create a Pydantic-like schema class
-                        let code = format!(r#"
+                        let code = format!(
+                            r#"
 class OutputSchema(dict):
     @classmethod
     def model_json_schema(cls):
         return {{"title": "LangGraphOutput", "type": "{}"}}
 OutputSchema
-"#, json_type);
+"#,
+                            json_type
+                        );
                         let locals = PyDict::new(py);
                         py.run(&code, None, Some(locals))?;
                         let schema = locals.get_item("OutputSchema")?.ok_or_else(|| {
-                            pyo3::exceptions::PyRuntimeError::new_err("Failed to create OutputSchema")
+                            pyo3::exceptions::PyRuntimeError::new_err(
+                                "Failed to create OutputSchema",
+                            )
                         })?;
                         return Ok(schema.into());
                     }
@@ -1144,22 +1197,14 @@ MockSchema
     }
 
     /// Get the output JSON schema for the graph
-    fn get_output_jsonschema(
-        &self,
-        py: Python,
-        config: Option<PyObject>,
-    ) -> PyResult<PyObject> {
+    fn get_output_jsonschema(&self, py: Python, config: Option<PyObject>) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual output schema
         // For now, return an empty dict
         Ok(PyDict::new(py).into())
     }
 
     /// Get the context JSON schema for the graph
-    fn get_context_jsonschema(
-        &self,
-        py: Python,
-        _config: Option<PyObject>,
-    ) -> PyResult<PyObject> {
+    fn get_context_jsonschema(&self, py: Python, _config: Option<PyObject>) -> PyResult<PyObject> {
         // Return None to indicate no context schema
         Ok(py.None())
     }
@@ -1202,11 +1247,7 @@ MockSchema
         };
 
         // 4. Create PregelLoop
-        let mut loop_executor = PregelLoop::new(
-            pregel_nodes,
-            self.channels.clone(),
-            config,
-        );
+        let mut loop_executor = PregelLoop::new(pregel_nodes, self.channels.clone(), config);
 
         // 5. Execute
         let result = loop_executor.invoke(py, input)?;
@@ -1301,11 +1342,7 @@ MockSchema
         };
 
         // 4. Create PregelLoop
-        let mut loop_executor = PregelLoop::new(
-            pregel_nodes,
-            self.channels.clone(),
-            config,
-        );
+        let mut loop_executor = PregelLoop::new(pregel_nodes, self.channels.clone(), config);
 
         // 5. Execute with streaming
         let results = loop_executor.stream(py, input)?;
@@ -1367,19 +1404,25 @@ impl GraphExecutor {
     fn new() -> Self {
         GraphExecutor {}
     }
-    
+
     /// Execute the graph
     fn execute_graph(&self, _py: Python, input: &PyDict) -> PyResult<PyObject> {
         // This is a simplified implementation
         // In a real implementation, we would convert the Python input
         // to Rust types, execute the graph, and convert the result back
-        
+
         // For now, we'll just return the input as output
         Ok(input.into())
     }
-    
+
     /// Add a node to the graph
-    fn add_node(&mut self, _py: Python, _node_id: String, _triggers: Vec<String>, _channels: Vec<String>) -> PyResult<()> {
+    fn add_node(
+        &mut self,
+        _py: Python,
+        _node_id: String,
+        _triggers: Vec<String>,
+        _channels: Vec<String>,
+    ) -> PyResult<()> {
         // In a real implementation, we would create a proper PregelNode
         // with a Python callable as the processor
         Ok(())

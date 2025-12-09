@@ -38,23 +38,28 @@ pub struct RetryPolicyConfig {
 impl RetryPolicyConfig {
     /// Create from Python retry policy object
     pub fn from_py_object(py: Python, obj: &PyObject) -> PyResult<Self> {
-        let initial_interval = obj.getattr(py, "initial_interval")
+        let initial_interval = obj
+            .getattr(py, "initial_interval")
             .and_then(|v| v.extract::<f64>(py))
             .unwrap_or(1.0);
 
-        let backoff_factor = obj.getattr(py, "backoff_factor")
+        let backoff_factor = obj
+            .getattr(py, "backoff_factor")
             .and_then(|v| v.extract::<f64>(py))
             .unwrap_or(2.0);
 
-        let max_interval = obj.getattr(py, "max_interval")
+        let max_interval = obj
+            .getattr(py, "max_interval")
             .and_then(|v| v.extract::<f64>(py))
             .unwrap_or(60.0);
 
-        let max_attempts = obj.getattr(py, "max_attempts")
+        let max_attempts = obj
+            .getattr(py, "max_attempts")
             .and_then(|v| v.extract::<usize>(py))
             .unwrap_or(3);
 
-        let jitter = obj.getattr(py, "jitter")
+        let jitter = obj
+            .getattr(py, "jitter")
             .and_then(|v| v.extract::<bool>(py))
             .unwrap_or(false);
 
@@ -198,9 +203,7 @@ impl PregelExecutableTask {
                             let delay_ms = delay_ms.min(retry_policy.max_interval);
 
                             // Sleep
-                            std::thread::sleep(std::time::Duration::from_millis(
-                                delay_ms as u64,
-                            ));
+                            std::thread::sleep(std::time::Duration::from_millis(delay_ms as u64));
 
                             last_error = Some(e);
                         } else {

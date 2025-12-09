@@ -1,9 +1,10 @@
 name: LangGraph Compatibility
 
 on:
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       langgraph_branch:
@@ -16,18 +17,8 @@ env:
 
 jobs:
   compatibility:
-    name: LangGraph Compatibility (${{ matrix.os }}, Python ${{ matrix.python-version }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.9', '3.11', '3.13']
-        include:
-          - os: macos-latest
-            python-version: '3.12'
-          - os: windows-latest
-            python-version: '3.12'
+    name: LangGraph Compatibility
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +29,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install ${{ matrix.python-version }}
+        run: uv python install 3.12
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -61,7 +52,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: results-${{ matrix.os }}-py${{ matrix.python-version }}
+          name: results-ubuntu-py3.12
           path: .langgraph-test/
           retention-days: 7
 

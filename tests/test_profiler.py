@@ -2,15 +2,17 @@
 Tests for profiling tools.
 """
 
-import pytest
 import time
+
+import pytest
+
 from fast_langgraph.profiler import (
-    NodeProfiler,
     GraphProfiler,
+    NodeProfiler,
     PerformanceRecommendations,
-    profile_function,
-    create_profiler,
     create_node_profiler,
+    create_profiler,
+    profile_function,
 )
 
 
@@ -155,7 +157,7 @@ def test_graph_profiler_cache_tracking():
     summary = profiler.get_summary()
     assert summary["cache_hits"] == 2
     assert summary["cache_misses"] == 1
-    assert abs(summary["cache_hit_rate"] - 2.0/3.0) < 0.01
+    assert abs(summary["cache_hit_rate"] - 2.0 / 3.0) < 0.01
 
 
 def test_graph_profiler_zero_cache_operations():
@@ -202,6 +204,7 @@ def test_graph_profiler_export_json(tmp_path):
 
     # Read and verify JSON
     import json
+
     with open(json_file) as f:
         data = json.load(f)
 
@@ -253,7 +256,10 @@ def test_performance_recommendations_high_cache_hit_rate():
 
     recommendations = PerformanceRecommendations.analyze(profiler)
     recommendation_text = " ".join(recommendations)
-    assert "excellent" in recommendation_text.lower() or "good" in recommendation_text.lower()
+    assert (
+        "excellent" in recommendation_text.lower()
+        or "good" in recommendation_text.lower()
+    )
 
 
 def test_performance_recommendations_slowest_nodes():
@@ -268,7 +274,10 @@ def test_performance_recommendations_slowest_nodes():
 
     recommendations = PerformanceRecommendations.analyze(profiler)
     recommendation_text = " ".join(recommendations)
-    assert "slowest nodes" in recommendation_text.lower() or "slow_node" in recommendation_text.lower()
+    assert (
+        "slowest nodes" in recommendation_text.lower()
+        or "slow_node" in recommendation_text.lower()
+    )
 
 
 def test_performance_recommendations_high_checkpoint_frequency():
@@ -299,7 +308,10 @@ def test_performance_recommendations_slow_execution():
     recommendations = PerformanceRecommendations.analyze(profiler)
     recommendation_text = " ".join(recommendations)
     # Should provide performance tips for slow execution
-    assert "cache" in recommendation_text.lower() or "performance" in recommendation_text.lower()
+    assert (
+        "cache" in recommendation_text.lower()
+        or "performance" in recommendation_text.lower()
+    )
 
 
 def test_performance_recommendations_print(capsys):
@@ -326,6 +338,7 @@ def test_performance_recommendations_no_data():
 
 def test_profile_function_decorator(capsys):
     """Test profile_function decorator."""
+
     @profile_function
     def slow_function():
         time.sleep(0.01)

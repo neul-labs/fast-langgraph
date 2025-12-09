@@ -1,10 +1,11 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyBytes};
+use pyo3::types::{PyBytes, PyDict};
+#[allow(unused_imports)]
+use serde::Deserialize;
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "sqlite")]
-use rusqlite::{Connection, params, Result as SqliteResult};
+use rusqlite::{params, Connection, Result as SqliteResult};
 
 #[cfg(feature = "compression-zstd")]
 use zstd;
@@ -26,9 +27,7 @@ impl Compression {
         match self {
             Compression::None => data.to_vec(),
             #[cfg(feature = "compression-zstd")]
-            Compression::Zstd => {
-                zstd::encode_all(data, 3).unwrap_or_else(|_| data.to_vec())
-            }
+            Compression::Zstd => zstd::encode_all(data, 3).unwrap_or_else(|_| data.to_vec()),
             #[cfg(feature = "compression-lz4")]
             Compression::Lz4 => {
                 lz4::block::compress(data, None, true).unwrap_or_else(|_| data.to_vec())
@@ -40,9 +39,7 @@ impl Compression {
         match self {
             Compression::None => data.to_vec(),
             #[cfg(feature = "compression-zstd")]
-            Compression::Zstd => {
-                zstd::decode_all(data).unwrap_or_else(|_| data.to_vec())
-            }
+            Compression::Zstd => zstd::decode_all(data).unwrap_or_else(|_| data.to_vec()),
             #[cfg(feature = "compression-lz4")]
             Compression::Lz4 => {
                 lz4::block::decompress(data, None).unwrap_or_else(|_| data.to_vec())
@@ -72,9 +69,10 @@ impl RustSQLiteCheckpointer {
             #[cfg(feature = "compression-lz4")]
             Some("lz4") => Compression::Lz4,
             Some(other) => {
-                return Err(pyo3::exceptions::PyValueError::new_err(
-                    format!("Unknown compression: {}. Use 'zstd' or 'lz4'", other)
-                ));
+                return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                    "Unknown compression: {}. Use 'zstd' or 'lz4'",
+                    other
+                )));
             }
         };
 
@@ -115,8 +113,9 @@ impl RustSQLiteCheckpointer {
         };
 
         // Serialize using MessagePack
-        let serialized = rmp_serde::to_vec(&checkpoint_data)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e)))?;
+        let serialized = rmp_serde::to_vec(&checkpoint_data).map_err(|e| {
+            pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
+        })?;
 
         // Compress if enabled
         let data = self.compression.compress(&serialized);
@@ -129,7 +128,8 @@ impl RustSQLiteCheckpointer {
             "INSERT OR REPLACE INTO checkpoints (thread_id, checkpoint_id, data, created_at)
              VALUES (?1, ?2, ?3, datetime('now'))",
             params![thread_id, checkpoint_id, data],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Insert error: {}", e)))?;
+        )
+        .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Insert error: {}", e)))?;
 
         Ok(true)
     }
@@ -156,15 +156,23 @@ impl RustSQLiteCheckpointer {
                 let serialized = self.compression.decompress(&compressed_data);
 
                 // Deserialize using MessagePack
-                let checkpoint_data: CheckpointData = rmp_serde::from_slice(&serialized)
-                    .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Deserialization error: {}", e)))?;
+                let checkpoint_data: CheckpointData =
+                    rmp_serde::from_slice(&serialized).map_err(|e| {
+                        pyo3::exceptions::PyValueError::new_err(format!(
+                            "Deserialization error: {}",
+                            e
+                        ))
+                    })?;
 
                 // Convert back to Python dict
                 let result = self.checkpoint_data_to_py(py, &checkpoint_data)?;
                 Ok(Some(result))
             }
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(pyo3::exceptions::PyIOError::new_err(format!("Query error: {}", e))),
+            Err(e) => Err(pyo3::exceptions::PyIOError::new_err(format!(
+                "Query error: {}",
+                e
+            ))),
         }
     }
 
@@ -182,7 +190,8 @@ impl RustSQLiteCheckpointer {
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Query error: {}", e)))?
             .collect();
 
-        checkpoint_ids.map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Collection error: {}", e)))
+        checkpoint_ids
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Collection error: {}", e)))
     }
 
     /// Delete a checkpoint
@@ -190,10 +199,12 @@ impl RustSQLiteCheckpointer {
         let conn = Connection::open(&self.db_path)
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Database error: {}", e)))?;
 
-        let rows = conn.execute(
-            "DELETE FROM checkpoints WHERE thread_id = ?1 AND checkpoint_id = ?2",
-            params![thread_id, checkpoint_id],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Delete error: {}", e)))?;
+        let rows = conn
+            .execute(
+                "DELETE FROM checkpoints WHERE thread_id = ?1 AND checkpoint_id = ?2",
+                params![thread_id, checkpoint_id],
+            )
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Delete error: {}", e)))?;
 
         Ok(rows > 0)
     }
@@ -203,10 +214,12 @@ impl RustSQLiteCheckpointer {
         let conn = Connection::open(&self.db_path)
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Database error: {}", e)))?;
 
-        let rows = conn.execute(
-            "DELETE FROM checkpoints WHERE thread_id = ?1",
-            params![thread_id],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Delete error: {}", e)))?;
+        let rows = conn
+            .execute(
+                "DELETE FROM checkpoints WHERE thread_id = ?1",
+                params![thread_id],
+            )
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Delete error: {}", e)))?;
 
         Ok(rows > 0)
     }
@@ -219,25 +232,25 @@ impl RustSQLiteCheckpointer {
         let mut stats = HashMap::new();
 
         // Total threads
-        let total_threads: usize = conn.query_row(
-            "SELECT COUNT(DISTINCT thread_id) FROM checkpoints",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let total_threads: usize = conn
+            .query_row(
+                "SELECT COUNT(DISTINCT thread_id) FROM checkpoints",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
 
         // Total checkpoints
-        let total_checkpoints: usize = conn.query_row(
-            "SELECT COUNT(*) FROM checkpoints",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let total_checkpoints: usize = conn
+            .query_row("SELECT COUNT(*) FROM checkpoints", [], |row| row.get(0))
+            .unwrap_or(0);
 
         // Total bytes
-        let total_bytes: usize = conn.query_row(
-            "SELECT SUM(LENGTH(data)) FROM checkpoints",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let total_bytes: usize = conn
+            .query_row("SELECT SUM(LENGTH(data)) FROM checkpoints", [], |row| {
+                row.get(0)
+            })
+            .unwrap_or(0);
 
         stats.insert("total_threads".to_string(), total_threads);
         stats.insert("total_checkpoints".to_string(), total_checkpoints);
@@ -262,13 +275,15 @@ impl RustSQLiteCheckpointer {
                 PRIMARY KEY (thread_id, checkpoint_id)
             )",
             [],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create table error: {}", e)))?;
+        )
+        .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create table error: {}", e)))?;
 
         // Create index for faster lookups
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_thread_id ON checkpoints(thread_id)",
             [],
-        ).map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create index error: {}", e)))?;
+        )
+        .map_err(|e| pyo3::exceptions::PyIOError::new_err(format!("Create index error: {}", e)))?;
 
         Ok(())
     }
@@ -299,11 +314,7 @@ impl RustSQLiteCheckpointer {
         Ok(channel_values)
     }
 
-    fn extract_versions(
-        &self,
-        checkpoint: &PyDict,
-        key: &str,
-    ) -> PyResult<HashMap<String, usize>> {
+    fn extract_versions(&self, checkpoint: &PyDict, key: &str) -> PyResult<HashMap<String, usize>> {
         let mut versions = HashMap::new();
 
         if let Ok(Some(versions_obj)) = checkpoint.get_item(key) {
@@ -347,11 +358,7 @@ impl RustSQLiteCheckpointer {
         Ok(versions_seen)
     }
 
-    fn checkpoint_data_to_py(
-        &self,
-        py: Python,
-        data: &CheckpointData,
-    ) -> PyResult<PyObject> {
+    fn checkpoint_data_to_py(&self, py: Python, data: &CheckpointData) -> PyResult<PyObject> {
         let result = PyDict::new(py);
 
         // Deserialize channel values

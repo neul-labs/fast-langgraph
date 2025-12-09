@@ -3,9 +3,9 @@
 //! This module implements the core execution logic for running graphs.
 //! It handles node execution, state management, and error handling.
 
-use std::collections::HashMap;
+use crate::graph::{Edge, Graph, NodeFunction};
 use std::any::Any;
-use crate::graph::{Graph, Edge, NodeFunction};
+use std::collections::HashMap;
 
 /// State represents the current execution state of the graph
 pub struct State {
@@ -100,15 +100,16 @@ impl Executor {
     /// Execute a single node with the current state
     pub fn execute_node(&mut self, node_name: &str) -> Result<(), String> {
         // Get the node
-        let node = self.graph.nodes.get(node_name)
+        let node = self
+            .graph
+            .nodes
+            .get(node_name)
             .ok_or_else(|| format!("Node '{}' not found in graph", node_name))?;
 
         // Execute the node function with current state
         let state_ref = &self.state as &dyn Any;
-        let result = match &node.function {
-            NodeFunction::Python(func) | NodeFunction::Rust(func) => {
-                func(state_ref)?
-            }
+        let _result = match &node.function {
+            NodeFunction::Python(func) | NodeFunction::Rust(func) => func(state_ref)?,
         };
 
         // Update state with result
@@ -123,13 +124,18 @@ impl Executor {
     ///
     /// This follows the execution order determined by the graph topology.
     /// For linear graphs, this simply runs nodes in sequence.
-    pub fn invoke(&mut self, input: Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, String> {
+    pub fn invoke(
+        &mut self,
+        input: Box<dyn Any + Send + Sync>,
+    ) -> Result<Box<dyn Any + Send + Sync>, String> {
         // Set initial input as state
         // For simplicity, we'll store it under a special "__input__" key
         self.state.set("__input__".to_string(), input);
 
         // Get execution order (clone to avoid borrow checker issues)
-        let execution_order = self.graph.execution_order()
+        let execution_order = self
+            .graph
+            .execution_order()
             .ok_or_else(|| "Cannot execute graph: contains cycles or invalid topology".to_string())?
             .to_vec();
 
@@ -141,8 +147,10 @@ impl Executor {
         // Return the final state
         // For now, return the entire state as the output
         // In a real implementation, we'd extract specific output channels
-        let output = self.state.get("__output__")
-            .map(|v| {
+        let output = self
+            .state
+            .get("__output__")
+            .map(|_v| {
                 // This is a placeholder - in reality we need proper type handling
                 Box::new(()) as Box<dyn Any + Send + Sync>
             })
@@ -154,7 +162,11 @@ impl Executor {
     /// Execute a specific path through the graph
     ///
     /// This is useful for conditional execution where only certain nodes should run.
-    pub fn invoke_path(&mut self, node_names: &[String], input: Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, String> {
+    pub fn invoke_path(
+        &mut self,
+        node_names: &[String],
+        input: Box<dyn Any + Send + Sync>,
+    ) -> Result<Box<dyn Any + Send + Sync>, String> {
         // Set initial input
         self.state.set("__input__".to_string(), input);
 
@@ -164,7 +176,9 @@ impl Executor {
         }
 
         // Return output
-        let output = self.state.get("__output__")
+        let output = self
+            .state
+            .get("__output__")
             .map(|_| Box::new(()) as Box<dyn Any + Send + Sync>)
             .unwrap_or_else(|| Box::new(()) as Box<dyn Any + Send + Sync>);
 
@@ -175,13 +189,21 @@ impl Executor {
     fn evaluate_conditional_edge(&self, edge: &Edge) -> Result<Option<String>, String> {
         match edge {
             Edge::Direct { target, .. } => Ok(Some(target.clone())),
-            Edge::Conditional { condition, path_map, .. } => {
+            Edge::Conditional {
+                condition,
+                path_map,
+                ..
+            } => {
                 let state_ref = &self.state as &dyn Any;
                 let condition_result = condition(state_ref)?;
 
                 // Look up the target in the path map
-                let target = path_map.get(&condition_result)
-                    .ok_or_else(|| format!("Condition result '{}' not found in path map", condition_result))?;
+                let target = path_map.get(&condition_result).ok_or_else(|| {
+                    format!(
+                        "Condition result '{}' not found in path map",
+                        condition_result
+                    )
+                })?;
 
                 Ok(Some(target.clone()))
             }
@@ -192,12 +214,18 @@ impl Executor {
     /// Execute graph with support for conditional edges
     ///
     /// This is more advanced than invoke() and handles branching logic.
-    pub fn invoke_with_conditions(&mut self, input: Box<dyn Any + Send + Sync>) -> Result<Box<dyn Any + Send + Sync>, String> {
+    pub fn invoke_with_conditions(
+        &mut self,
+        input: Box<dyn Any + Send + Sync>,
+    ) -> Result<Box<dyn Any + Send + Sync>, String> {
         // Set initial input
         self.state.set("__input__".to_string(), input);
 
         // Start from entry point
-        let mut current_node = self.graph.entry_point.as_ref()
+        let mut current_node = self
+            .graph
+            .entry_point
+            .as_ref()
             .ok_or_else(|| "No entry point defined in graph".to_string())?
             .clone();
 
@@ -244,7 +272,9 @@ impl Executor {
         }
 
         // Return output
-        let output = self.state.get("__output__")
+        let output = self
+            .state
+            .get("__output__")
             .map(|_| Box::new(()) as Box<dyn Any + Send + Sync>)
             .unwrap_or_else(|| Box::new(()) as Box<dyn Any + Send + Sync>);
 
@@ -281,7 +311,10 @@ mod tests {
         state.set("key1".to_string(), Box::new(42));
 
         let mut updates = HashMap::new();
-        updates.insert("key2".to_string(), Box::new("value".to_string()) as Box<dyn Any + Send + Sync>);
+        updates.insert(
+            "key2".to_string(),
+            Box::new("value".to_string()) as Box<dyn Any + Send + Sync>,
+        );
 
         state.update(updates);
 

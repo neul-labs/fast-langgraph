@@ -3,10 +3,11 @@ Python wrapper for the Rust cached decorator to provide Pythonic interface.
 """
 
 from functools import wraps
-from typing import Callable, Any, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
+
 from .fast_langgraph import RustFunctionCache
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def cached(func: Optional[Callable] = None, *, max_size: int = 1000) -> Callable:
@@ -29,6 +30,7 @@ def cached(func: Optional[Callable] = None, *, max_size: int = 1000) -> Callable
     Returns:
         Decorated function with caching enabled
     """
+
     def decorator(f: Callable) -> Callable:
         cache = RustFunctionCache(max_size=max_size)
 
@@ -50,8 +52,12 @@ def cached(func: Optional[Callable] = None, *, max_size: int = 1000) -> Callable
         # Add cache management methods
         wrapper.cache_stats = lambda: cache.stats()
         wrapper.cache_clear = lambda: cache.clear()
-        wrapper.cache_contains = lambda *args, **kwargs: cache.contains(args, kwargs if kwargs else None)
-        wrapper.cache_invalidate = lambda *args, **kwargs: cache.invalidate(args, kwargs if kwargs else None)
+        wrapper.cache_contains = lambda *args, **kwargs: cache.contains(
+            args, kwargs if kwargs else None
+        )
+        wrapper.cache_invalidate = lambda *args, **kwargs: cache.invalidate(
+            args, kwargs if kwargs else None
+        )
         wrapper.__wrapped__ = f
         wrapper._cache = cache
 
@@ -66,4 +72,4 @@ def cached(func: Optional[Callable] = None, *, max_size: int = 1000) -> Callable
         return decorator(func)
 
 
-__all__ = ['cached']
+__all__ = ["cached"]

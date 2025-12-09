@@ -11,8 +11,7 @@ instead of creating new ones each time, which saves ~20ms per invocation.
 import atexit
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Dict, Tuple
-from weakref import WeakValueDictionary
+from typing import Dict, Optional, Tuple
 
 
 class ExecutorCache:
@@ -32,9 +31,7 @@ class ExecutorCache:
         atexit.register(self.shutdown_all)
 
     def get_executor(
-        self,
-        max_workers: Optional[int] = None,
-        thread_name_prefix: str = "langgraph-"
+        self, max_workers: Optional[int] = None, thread_name_prefix: str = "langgraph-"
     ) -> ThreadPoolExecutor:
         """
         Get or create a cached executor.
@@ -64,8 +61,7 @@ class ExecutorCache:
 
             # Create new executor
             executor = ThreadPoolExecutor(
-                max_workers=max_workers,
-                thread_name_prefix=thread_name_prefix
+                max_workers=max_workers, thread_name_prefix=thread_name_prefix
             )
             self._cache[cache_key] = executor
             return executor
@@ -90,8 +86,7 @@ _executor_cache = ExecutorCache()
 
 
 def get_cached_executor(
-    max_workers: Optional[int] = None,
-    thread_name_prefix: str = "langgraph-"
+    max_workers: Optional[int] = None, thread_name_prefix: str = "langgraph-"
 ) -> ThreadPoolExecutor:
     """
     Get a cached thread pool executor.
@@ -159,23 +154,19 @@ def patch_langchain_executor():
         from langchain_core.runnables import config as lc_config
 
         # Store original function
-        _original_get_executor = getattr(lc_config, 'get_executor_for_config', None)
+        _original_get_executor = getattr(lc_config, "get_executor_for_config", None)
 
         if _original_get_executor is None:
             print("⚠ Warning: Could not find get_executor_for_config in langchain_core")
             return False
 
         # Create patched version
-        def get_executor_for_config_cached(
-            config=None,
-            *args,
-            **kwargs
-        ):
+        def get_executor_for_config_cached(config=None, *args, **kwargs):
             """Cached version of get_executor_for_config."""
             # Extract max_workers from config if present
             max_workers = None
             if config and isinstance(config, dict):
-                max_workers = config.get('max_concurrency')
+                max_workers = config.get("max_concurrency")
 
             # Return cached executor in context manager
             return CachedExecutorContext(max_workers)

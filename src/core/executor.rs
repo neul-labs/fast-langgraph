@@ -84,7 +84,8 @@ impl PregelCore {
         // Initialize state with input
         // For now, we'll store the input in a special __input__ channel
         if !self.state.has_channel("__input__") {
-            self.state.add_channel("__input__".to_string(), Box::new(LastValueChannel::new()));
+            self.state
+                .add_channel("__input__".to_string(), Box::new(LastValueChannel::new()));
         }
         self.state.update_channel(py, "__input__", input)?;
 
@@ -102,8 +103,9 @@ impl PregelCore {
     /// Synchronous invoke wrapper
     pub fn invoke(&mut self, py: Python<'_>, input: PyObject) -> PyResult<PyObject> {
         // Use tokio runtime for async execution
-        let rt = tokio::runtime::Runtime::new()
-            .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(format!("Failed to create runtime: {}", e)))?;
+        let rt = tokio::runtime::Runtime::new().map_err(|e| {
+            pyo3::exceptions::PyRuntimeError::new_err(format!("Failed to create runtime: {}", e))
+        })?;
 
         rt.block_on(self.invoke_async(py, input))
     }
@@ -227,7 +229,8 @@ impl PregelCore {
                 self.state.update_channel(py, &channel_name, value)?;
             } else {
                 // Auto-create channel if it doesn't exist
-                self.state.add_channel(channel_name.clone(), Box::new(LastValueChannel::new()));
+                self.state
+                    .add_channel(channel_name.clone(), Box::new(LastValueChannel::new()));
                 self.state.update_channel(py, &channel_name, value)?;
             }
         }
@@ -370,12 +373,18 @@ mod tests {
             executor.set_entry_point("add_one".to_string());
 
             // Set initial input
-            executor.state_mut().update_channel(py, "input", 42.to_object(py)).unwrap();
+            executor
+                .state_mut()
+                .update_channel(py, "input", 42.to_object(py))
+                .unwrap();
 
             // Execute
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                executor.execute_from(py, "add_one".to_string()).await.unwrap();
+                executor
+                    .execute_from(py, "add_one".to_string())
+                    .await
+                    .unwrap();
             });
 
             // Check output
@@ -413,23 +422,35 @@ mod tests {
             executor.add_node(node2);
 
             // Add edge: add_one -> multiply_two
-            executor.add_edge(Edge::direct("add_one".to_string(), "multiply_two".to_string()));
+            executor.add_edge(Edge::direct(
+                "add_one".to_string(),
+                "multiply_two".to_string(),
+            ));
 
             // Add channels
             executor.add_channel("input".to_string(), Box::new(LastValueChannel::new()));
-            executor.add_channel("intermediate".to_string(), Box::new(LastValueChannel::new()));
+            executor.add_channel(
+                "intermediate".to_string(),
+                Box::new(LastValueChannel::new()),
+            );
             executor.add_channel("output".to_string(), Box::new(LastValueChannel::new()));
 
             // Set entry
             executor.set_entry_point("add_one".to_string());
 
             // Set input
-            executor.state_mut().update_channel(py, "input", 5.to_object(py)).unwrap();
+            executor
+                .state_mut()
+                .update_channel(py, "input", 5.to_object(py))
+                .unwrap();
 
             // Execute
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                executor.execute_from(py, "add_one".to_string()).await.unwrap();
+                executor
+                    .execute_from(py, "add_one".to_string())
+                    .await
+                    .unwrap();
             });
 
             // Check: (5 + 1) * 2 = 12

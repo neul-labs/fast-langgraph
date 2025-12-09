@@ -9,7 +9,7 @@ use pyo3::types::{PyDict, PyList};
 use std::collections::HashMap;
 
 use crate::pregel_node::{PregelExecutableTask, PregelNode};
-use crate::send::{Send, extract_sends_from_result, process_pending_sends};
+use crate::send::process_pending_sends;
 
 /// Result of task execution with writes
 pub struct TaskWrites {
@@ -19,6 +19,7 @@ pub struct TaskWrites {
 }
 
 /// Prepare next tasks to execute based on current checkpoint state
+#[allow(clippy::too_many_arguments)]
 pub fn prepare_next_tasks(
     py: Python,
     checkpoint_id: &str,
@@ -125,9 +126,7 @@ pub fn apply_writes(
 ) -> PyResult<()> {
     // Update versions_seen for all tasks
     for task in tasks {
-        let task_seen = versions_seen
-            .entry(task.name.clone())
-            .or_insert_with(HashMap::new);
+        let task_seen = versions_seen.entry(task.name.clone()).or_default();
 
         for trigger in &task.triggers {
             if let Some(&version) = checkpoint_versions.get(trigger) {
@@ -145,7 +144,7 @@ pub fn apply_writes(
         for (channel, value) in &task.writes {
             writes_by_channel
                 .entry(channel.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(value.clone_ref(py));
         }
     }
@@ -210,9 +209,9 @@ pub fn should_interrupt(
     }
 
     // Check if any triggered node is in interrupt_nodes list
-    let should_interrupt_node = tasks.iter().any(|task| {
-        interrupt_nodes.is_empty() || interrupt_nodes.contains(&task.name)
-    });
+    let should_interrupt_node = tasks
+        .iter()
+        .any(|task| interrupt_nodes.is_empty() || interrupt_nodes.contains(&task.name));
 
     any_channel_updated && should_interrupt_node
 }

@@ -61,7 +61,7 @@ impl CheckpointState {
     }
 
     /// Create from Python checkpoint dict
-    pub fn from_py_checkpoint(py: Python, checkpoint: &PyDict) -> PyResult<Self> {
+    pub fn from_py_checkpoint(_py: Python, checkpoint: &PyDict) -> PyResult<Self> {
         let id = checkpoint
             .get_item("id")?
             .and_then(|v| v.extract::<String>().ok())
@@ -135,7 +135,7 @@ impl PregelLoop {
 
     /// Create from existing checkpoint (for resuming)
     pub fn from_checkpoint(
-        py: Python,
+        _py: Python,
         nodes: HashMap<String, PregelNode>,
         channels: HashMap<String, PyObject>,
         checkpoint: CheckpointState,
@@ -337,7 +337,7 @@ impl PregelLoop {
                 if let Some(channel) = self.channels.get_mut(&channel_name) {
                     // Call channel.update([value])
                     if let Ok(update_method) = channel.getattr(py, "update") {
-                        let values = PyList::new(py, &[value]);
+                        let values = PyList::new(py, [value]);
                         update_method.call1(py, (values,))?;
 
                         // Set initial version
@@ -373,11 +373,7 @@ impl PregelLoop {
     }
 
     /// Execute with streaming - yields intermediate states
-    pub fn stream(
-        &mut self,
-        py: Python,
-        input: PyObject,
-    ) -> PyResult<Vec<PyObject>> {
+    pub fn stream(&mut self, py: Python, input: PyObject) -> PyResult<Vec<PyObject>> {
         let mut results = Vec::new();
 
         // Initialize channels with input

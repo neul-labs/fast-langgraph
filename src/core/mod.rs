@@ -11,13 +11,13 @@
 //! while providing high-performance async execution in Rust.
 
 pub mod channel;
-pub mod state;
-pub mod node;
 pub mod edge;
 pub mod executor;
+pub mod node;
+pub mod state;
 
 pub use channel::{Channel, ChannelUpdate, LastValueChannel, TopicChannel};
-pub use state::GraphState;
-pub use node::Node;
 pub use edge::Edge;
 pub use executor::PregelCore;
+pub use node::Node;
+pub use state::GraphState;

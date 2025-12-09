@@ -86,15 +86,12 @@ impl Node {
             Some(channels) if channels.len() == 1 => {
                 // Single input channel - return just the value
                 let channel_name = &channels[0];
-                channel_values
-                    .get(channel_name)
-                    .cloned()
-                    .ok_or_else(|| {
-                        pyo3::exceptions::PyKeyError::new_err(format!(
-                            "Input channel '{}' not found",
-                            channel_name
-                        ))
-                    })
+                channel_values.get(channel_name).cloned().ok_or_else(|| {
+                    pyo3::exceptions::PyKeyError::new_err(format!(
+                        "Input channel '{}' not found",
+                        channel_name
+                    ))
+                })
             }
             Some(channels) => {
                 // Multiple input channels - return dict
@@ -113,11 +110,7 @@ impl Node {
     ///
     /// Takes the node's output and maps it to channel updates.
     /// Returns a HashMap of channel_name -> value.
-    pub fn map_output(
-        &self,
-        py: Python,
-        output: PyObject,
-    ) -> PyResult<HashMap<String, PyObject>> {
+    pub fn map_output(&self, py: Python, output: PyObject) -> PyResult<HashMap<String, PyObject>> {
         let mut updates = HashMap::new();
 
         match &self.output_channels {
@@ -187,7 +180,7 @@ mod tests {
         pyo3::prepare_freethreaded_python();
 
         Python::with_gil(|py| {
-            let func = py.eval_bound("lambda x: x + 1", None, None).unwrap();
+            let func = py.eval("lambda x: x + 1", None, None).unwrap();
             let node = Node::new("test".to_string(), func.to_object(py));
 
             let input = 42.to_object(py);
@@ -202,7 +195,7 @@ mod tests {
         pyo3::prepare_freethreaded_python();
 
         Python::with_gil(|py| {
-            let func = py.eval_bound("lambda x: x", None, None).unwrap();
+            let func = py.eval("lambda x: x", None, None).unwrap();
             let node = Node::with_channels(
                 "test".to_string(),
                 func.to_object(py),
@@ -223,7 +216,7 @@ mod tests {
         pyo3::prepare_freethreaded_python();
 
         Python::with_gil(|py| {
-            let func = py.eval_bound("lambda x: x", None, None).unwrap();
+            let func = py.eval("lambda x: x", None, None).unwrap();
             let node = Node::with_channels(
                 "test".to_string(),
                 func.to_object(py),
@@ -236,10 +229,24 @@ mod tests {
             channel_values.insert("b".to_string(), 2.to_object(py));
 
             let input = node.extract_input(py, &channel_values).unwrap();
-            let dict = input.downcast_bound::<pyo3::types::PyDict>(py).unwrap();
+            let dict = input.downcast::<pyo3::types::PyDict>(py).unwrap();
 
-            assert_eq!(dict.get_item("a").unwrap().unwrap().extract::<i32>().unwrap(), 1);
-            assert_eq!(dict.get_item("b").unwrap().unwrap().extract::<i32>().unwrap(), 2);
+            assert_eq!(
+                dict.get_item("a")
+                    .unwrap()
+                    .unwrap()
+                    .extract::<i32>()
+                    .unwrap(),
+                1
+            );
+            assert_eq!(
+                dict.get_item("b")
+                    .unwrap()
+                    .unwrap()
+                    .extract::<i32>()
+                    .unwrap(),
+                2
+            );
         });
     }
 
@@ -248,7 +255,7 @@ mod tests {
         pyo3::prepare_freethreaded_python();
 
         Python::with_gil(|py| {
-            let func = py.eval_bound("lambda x: x", None, None).unwrap();
+            let func = py.eval("lambda x: x", None, None).unwrap();
             let node = Node::with_channels(
                 "test".to_string(),
                 func.to_object(py),
@@ -260,7 +267,10 @@ mod tests {
             let updates = node.map_output(py, output).unwrap();
 
             assert_eq!(updates.len(), 1);
-            assert_eq!(updates.get("output").unwrap().extract::<i32>(py).unwrap(), 42);
+            assert_eq!(
+                updates.get("output").unwrap().extract::<i32>(py).unwrap(),
+                42
+            );
         });
     }
 
@@ -269,7 +279,7 @@ mod tests {
         pyo3::prepare_freethreaded_python();
 
         Python::with_gil(|py| {
-            let func = py.eval_bound("lambda x: x", None, None).unwrap();
+            let func = py.eval("lambda x: x", None, None).unwrap();
             let node = Node::with_channels(
                 "test".to_string(),
                 func.to_object(py),
@@ -278,7 +288,7 @@ mod tests {
             );
 
             // Create a dict output
-            let dict = pyo3::types::PyDict::new_bound(py);
+            let dict = pyo3::types::PyDict::new(py);
             dict.set_item("out1", 1).unwrap();
             dict.set_item("out2", 2).unwrap();
 

@@ -5,8 +5,14 @@ This module provides a Python wrapper that makes RustCheckpointer compatible
 with LangGraph's BaseCheckpointSaver interface.
 """
 
-from typing import Any, Optional, Iterator, Dict
-from langgraph.checkpoint.base import BaseCheckpointSaver, Checkpoint, CheckpointMetadata
+from collections.abc import Iterator
+from typing import Any, Dict, Optional
+
+from langgraph.checkpoint.base import (
+    BaseCheckpointSaver,
+    Checkpoint,
+    CheckpointMetadata,
+)
 
 
 class RustCheckpointSaver(BaseCheckpointSaver):
@@ -21,6 +27,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):
         """Initialize the RustCheckpointSaver."""
         try:
             from .fast_langgraph import RustCheckpointer
+
             self._rust_checkpointer = RustCheckpointer()
         except ImportError as e:
             raise ImportError(

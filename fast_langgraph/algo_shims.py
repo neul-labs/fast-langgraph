@@ -5,11 +5,12 @@ This module provides Rust-accelerated implementations of hot-path functions
 in the LangGraph Pregel algorithm (_algo.py).
 """
 
-from typing import Any, Mapping, Sequence, Iterable, Set
 from collections import defaultdict
+from typing import Set
 
 try:
     from fast_langgraph import ChannelManager, FastChannelUpdater
+
     _rust_available = True
 except ImportError:
     _rust_available = False
@@ -40,13 +41,21 @@ def create_accelerated_apply_writes(original_apply_writes):
         Uses ChannelManager for batch write operations instead of
         iterating in Python.
         """
-        from langgraph._internal._constants import NO_WRITES, PUSH, RESUME, INTERRUPT, RETURN, ERROR, RESERVED
+        from langgraph._internal._constants import (
+            ERROR,
+            INTERRUPT,
+            NO_WRITES,
+            PUSH,
+            RESERVED,
+            RESUME,
+            RETURN,
+        )
         from langgraph.pregel._call import task_path_str
         from langgraph.pregel._log import logger
 
         # Sort tasks (same as original)
         tasks = sorted(tasks, key=lambda t: task_path_str(t.path[:3]))
-        bump_step = any(t.triggers for t in tasks)
+        _bump_step = any(t.triggers for t in tasks)  # noqa: F841
 
         # Update seen versions (same as original)
         for task in tasks:
@@ -105,7 +114,9 @@ def create_accelerated_apply_writes(original_apply_writes):
             # Apply writes in batch using Rust
             # This handles both RustLastValue channels (fast path) and
             # Python channels (fallback path) automatically
-            updated_list = updater.apply_writes_batch(channels, pending_writes_by_channel)
+            updated_list = updater.apply_writes_batch(
+                channels, pending_writes_by_channel
+            )
 
             # Update channel versions for all updated channels
             if next_version is not None:

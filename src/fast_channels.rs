@@ -1,8 +1,9 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyList, PyDict, PyType};
+use pyo3::types::{PyDict, PyList, PyType};
 use std::collections::HashMap;
 
 /// Marker trait for values that can be missing
+#[allow(dead_code)]
 const MISSING_MARKER: i64 = i64::MIN;
 
 /// Fast Rust implementation of LastValue channel
@@ -36,7 +37,7 @@ impl RustLastValue {
 
     /// Update the channel with new values
     /// Returns True if the channel was updated, False if no values provided
-    fn update(&mut self, py: Python, values: &PyList) -> PyResult<bool> {
+    fn update(&mut self, _py: Python, values: &PyList) -> PyResult<bool> {
         let len = values.len();
 
         if len == 0 {
@@ -60,7 +61,7 @@ impl RustLastValue {
         match &self.value {
             Some(v) => Ok(v.clone_ref(py)),
             None => Err(pyo3::exceptions::PyValueError::new_err(
-                "EmptyChannelError: Channel has no value"
+                "EmptyChannelError: Channel has no value",
             )),
         }
     }
@@ -80,16 +81,25 @@ impl RustLastValue {
 
     /// Create a copy of this channel
     fn copy(&self, py: Python) -> PyResult<Py<Self>> {
-        Py::new(py, RustLastValue {
-            key: self.key.clone(),
-            typ: self.typ.clone_ref(py),
-            value: self.value.as_ref().map(|v| v.clone_ref(py)),
-        })
+        Py::new(
+            py,
+            RustLastValue {
+                key: self.key.clone(),
+                typ: self.typ.clone_ref(py),
+                value: self.value.as_ref().map(|v| v.clone_ref(py)),
+            },
+        )
     }
 
     /// Restore from checkpoint
     #[classmethod]
-    fn from_checkpoint(_cls: &PyType, py: Python, typ: PyObject, checkpoint: PyObject, key: Option<String>) -> PyResult<Py<Self>> {
+    fn from_checkpoint(
+        _cls: &PyType,
+        py: Python,
+        typ: PyObject,
+        checkpoint: PyObject,
+        key: Option<String>,
+    ) -> PyResult<Py<Self>> {
         let mut channel = RustLastValue::new(typ, key.unwrap_or_default());
 
         // Check if checkpoint is None (MISSING)
@@ -160,24 +170,22 @@ impl FastChannelUpdater {
             let chan_name_str: String = chan_name.extract()?;
 
             // Get the channel
-            if let Ok(channel) = channels.get_item(chan_name) {
-                if let Some(channel) = channel {
-                    // Check if it's a RustLastValue channel
-                    if let Ok(mut rust_chan) = channel.extract::<PyRefMut<RustLastValue>>() {
-                        // Fast path: Rust channel
-                        let values_list: &PyList = values.downcast()?;
-                        if rust_chan.update(py, values_list)? {
-                            updated_channels.push(chan_name_str.clone());
-                        }
-                    } else {
-                        // Fallback: Python channel - call its update method
-                        let update_method = channel.getattr("update")?;
-                        let result = update_method.call1((values,))?;
+            if let Ok(Some(channel)) = channels.get_item(chan_name) {
+                // Check if it's a RustLastValue channel
+                if let Ok(mut rust_chan) = channel.extract::<PyRefMut<RustLastValue>>() {
+                    // Fast path: Rust channel
+                    let values_list: &PyList = values.downcast()?;
+                    if rust_chan.update(py, values_list)? {
+                        updated_channels.push(chan_name_str.clone());
+                    }
+                } else {
+                    // Fallback: Python channel - call its update method
+                    let update_method = channel.getattr("update")?;
+                    let result = update_method.call1((values,))?;
 
-                        if let Ok(updated) = result.extract::<bool>() {
-                            if updated {
-                                updated_channels.push(chan_name_str.clone());
-                            }
+                    if let Ok(updated) = result.extract::<bool>() {
+                        if updated {
+                            updated_channels.push(chan_name_str.clone());
                         }
                     }
                 }
@@ -194,7 +202,7 @@ impl FastChannelUpdater {
 }
 
 /// Register the fast channels module
-pub fn register_fast_channels(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn register_fast_channels(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<RustLastValue>()?;
     m.add_class::<FastChannelUpdater>()?;
     Ok(())

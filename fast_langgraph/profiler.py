@@ -4,11 +4,11 @@ Profiling tools for LangGraph execution.
 These tools help identify bottlenecks and optimize graph performance.
 """
 
+import json
 import time
-from typing import Dict, List, Optional, Any, Callable
 from collections import defaultdict
 from contextlib import contextmanager
-import json
+from typing import Any, Callable, Dict, List, Optional
 
 
 class NodeProfiler:
@@ -56,18 +56,18 @@ class NodeProfiler:
             print("No profiling data collected.")
             return
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("Node Profiling Report")
-        print("="*80)
+        print("=" * 80)
 
         # Sort by total time
         sorted_stats = sorted(
-            stats.items(),
-            key=lambda x: x[1]["total_time"],
-            reverse=True
+            stats.items(), key=lambda x: x[1]["total_time"], reverse=True
         )
 
-        print(f"\n{'Node':<30} {'Count':>8} {'Total (ms)':>12} {'Avg (ms)':>12} {'Min (ms)':>12} {'Max (ms)':>12}")
+        print(
+            f"\n{'Node':<30} {'Count':>8} {'Total (ms)':>12} {'Avg (ms)':>12} {'Min (ms)':>12} {'Max (ms)':>12}"
+        )
         print("-" * 80)
 
         for node_name, node_stats in sorted_stats:
@@ -107,10 +107,7 @@ class GraphProfiler:
     def profile_run(self):
         """Context manager to profile an entire graph run."""
         self.current_run_start = time.perf_counter()
-        run_data = {
-            "start_time": self.current_run_start,
-            "nodes_executed": []
-        }
+        run_data = {"start_time": self.current_run_start, "nodes_executed": []}
 
         try:
             yield self
@@ -173,22 +170,22 @@ class GraphProfiler:
             print(summary["error"])
             return
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("Graph Profiling Report")
-        print("="*80)
+        print("=" * 80)
 
-        print(f"\nGraph Execution:")
+        print("\nGraph Execution:")
         print(f"  Total runs: {summary['total_runs']}")
         print(f"  Total time: {summary['total_time']*1000:.2f} ms")
         print(f"  Avg time per run: {summary['avg_time_per_run']*1000:.2f} ms")
         print(f"  Min time: {summary['min_time']*1000:.2f} ms")
         print(f"  Max time: {summary['max_time']*1000:.2f} ms")
 
-        print(f"\nCheckpoints:")
+        print("\nCheckpoints:")
         print(f"  Saved: {summary['checkpoints_saved']}")
         print(f"  Loaded: {summary['checkpoints_loaded']}")
 
-        print(f"\nCache Performance:")
+        print("\nCache Performance:")
         print(f"  Hits: {summary['cache_hits']}")
         print(f"  Misses: {summary['cache_misses']}")
         print(f"  Hit rate: {summary['cache_hit_rate']*100:.1f}%")
@@ -199,19 +196,21 @@ class GraphProfiler:
     def export_json(self, filename: str):
         """Export profiling data to JSON file."""
         data = self.get_summary()
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(data, f, indent=2)
         print(f"Profiling data exported to {filename}")
 
 
 def profile_function(func: Callable) -> Callable:
     """Decorator to profile a function's execution time."""
+
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - start
         print(f"{func.__name__} took {elapsed*1000:.2f} ms")
         return result
+
     return wrapper
 
 
@@ -229,7 +228,10 @@ class PerformanceRecommendations:
 
         # Check cache performance
         cache_hit_rate = summary.get("cache_hit_rate", 0)
-        if cache_hit_rate < 0.5 and (summary["cache_hits"] + summary["cache_misses"]) > 10:
+        if (
+            cache_hit_rate < 0.5
+            and (summary["cache_hits"] + summary["cache_misses"]) > 10
+        ):
             recommendations.append(
                 f"⚠️  Low cache hit rate ({cache_hit_rate*100:.1f}%). "
                 "Consider increasing cache size or reviewing cache key strategy."
@@ -244,15 +246,11 @@ class PerformanceRecommendations:
         if node_stats:
             # Find slowest nodes
             slowest = sorted(
-                node_stats.items(),
-                key=lambda x: x[1]["avg_time"],
-                reverse=True
+                node_stats.items(), key=lambda x: x[1]["avg_time"], reverse=True
             )[:3]
 
             if slowest:
-                recommendations.append(
-                    f"\n📊 Slowest nodes (by avg time):"
-                )
+                recommendations.append("\n📊 Slowest nodes (by avg time):")
                 for node_name, stats in slowest:
                     recommendations.append(
                         f"   - {node_name}: {stats['avg_time']*1000:.2f} ms avg "
@@ -277,33 +275,31 @@ class PerformanceRecommendations:
 
         # General recommendations
         if summary["avg_time_per_run"] * 1000 > 100:  # > 100ms
-            recommendations.append(
-                "\n💡 Performance tips:"
-            )
-            recommendations.append(
-                "   - Use RustLLMCache for LLM response caching"
-            )
-            recommendations.append(
-                "   - Enable fast state merge operations"
-            )
+            recommendations.append("\n💡 Performance tips:")
+            recommendations.append("   - Use RustLLMCache for LLM response caching")
+            recommendations.append("   - Enable fast state merge operations")
             recommendations.append(
                 "   - Consider using in-memory checkpointer for development"
             )
 
-        return recommendations if recommendations else ["✅ No issues detected - performance looks good!"]
+        return (
+            recommendations
+            if recommendations
+            else ["✅ No issues detected - performance looks good!"]
+        )
 
     @staticmethod
     def print_recommendations(profiler: GraphProfiler):
         """Print optimization recommendations."""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("Performance Recommendations")
-        print("="*80)
+        print("=" * 80)
 
         recommendations = PerformanceRecommendations.analyze(profiler)
         for rec in recommendations:
             print(rec)
 
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
 
 # Convenience functions

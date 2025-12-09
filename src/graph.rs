@@ -17,13 +17,20 @@ pub struct Node {
     pub retry_policy: Option<RetryPolicy>,
 }
 
+/// Type alias for node function signature
+type NodeFn =
+    Arc<dyn Fn(&dyn std::any::Any) -> Result<Box<dyn std::any::Any>, String> + Send + Sync>;
+
+/// Type alias for condition function signature
+type ConditionFn = Arc<dyn Fn(&dyn std::any::Any) -> Result<String, String> + Send + Sync>;
+
 /// Node function can be either Python or Rust
 #[derive(Clone)]
 pub enum NodeFunction {
     /// Python callable (PyObject wrapper)
-    Python(Arc<dyn Fn(&dyn std::any::Any) -> Result<Box<dyn std::any::Any>, String> + Send + Sync>),
+    Python(NodeFn),
     /// Rust function
-    Rust(Arc<dyn Fn(&dyn std::any::Any) -> Result<Box<dyn std::any::Any>, String> + Send + Sync>),
+    Rust(NodeFn),
 }
 
 impl std::fmt::Debug for NodeFunction {
@@ -39,43 +46,37 @@ impl std::fmt::Debug for NodeFunction {
 #[derive(Clone)]
 pub enum Edge {
     /// Direct edge from source to target
-    Direct {
-        source: String,
-        target: String,
-    },
+    Direct { source: String, target: String },
     /// Conditional edge that evaluates a function to determine target
     Conditional {
         source: String,
-        condition: Arc<dyn Fn(&dyn std::any::Any) -> Result<String, String> + Send + Sync>,
+        condition: ConditionFn,
         path_map: HashMap<String, String>,
     },
     /// Entry point edge (no source)
-    Entry {
-        target: String,
-    },
+    Entry { target: String },
 }
 
 impl std::fmt::Debug for Edge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Edge::Direct { source, target } => {
-                f.debug_struct("Edge::Direct")
-                    .field("source", source)
-                    .field("target", target)
-                    .finish()
-            }
-            Edge::Conditional { source, path_map, .. } => {
-                f.debug_struct("Edge::Conditional")
-                    .field("source", source)
-                    .field("condition", &"<function>")
-                    .field("path_map", path_map)
-                    .finish()
-            }
-            Edge::Entry { target } => {
-                f.debug_struct("Edge::Entry")
-                    .field("target", target)
-                    .finish()
-            }
+            Edge::Direct { source, target } => f
+                .debug_struct("Edge::Direct")
+                .field("source", source)
+                .field("target", target)
+                .finish(),
+            Edge::Conditional {
+                source, path_map, ..
+            } => f
+                .debug_struct("Edge::Conditional")
+                .field("source", source)
+                .field("condition", &"<function>")
+                .field("path_map", path_map)
+                .finish(),
+            Edge::Entry { target } => f
+                .debug_struct("Edge::Entry")
+                .field("target", target)
+                .finish(),
         }
     }
 }
@@ -172,22 +173,27 @@ impl Graph {
         for edge in &self.edges {
             match edge {
                 Edge::Direct { source, target } => {
-                    adj_list.entry(source.clone())
-                        .or_insert_with(Vec::new)
+                    adj_list
+                        .entry(source.clone())
+                        .or_default()
                         .push(target.clone());
                 }
-                Edge::Conditional { source, path_map, .. } => {
+                Edge::Conditional {
+                    source, path_map, ..
+                } => {
                     for target in path_map.values() {
-                        adj_list.entry(source.clone())
-                            .or_insert_with(Vec::new)
+                        adj_list
+                            .entry(source.clone())
+                            .or_default()
                             .push(target.clone());
                     }
                 }
                 Edge::Entry { target } => {
                     // Entry edges don't contribute to ordering
                     if let Some(entry) = &self.entry_point {
-                        adj_list.entry(entry.clone())
-                            .or_insert_with(Vec::new)
+                        adj_list
+                            .entry(entry.clone())
+                            .or_default()
                             .push(target.clone());
                     }
                 }
@@ -236,10 +242,16 @@ impl Graph {
 
         // Process remaining nodes (in case of disconnected components)
         for node_name in self.nodes.keys() {
-            if !visited.contains(node_name) {
-                if !dfs(node_name, &adj_list, &mut visited, &mut visiting, &mut order) {
-                    return None; // Cycle detected
-                }
+            if !visited.contains(node_name)
+                && !dfs(
+                    node_name,
+                    &adj_list,
+                    &mut visited,
+                    &mut visiting,
+                    &mut order,
+                )
+            {
+                return None; // Cycle detected
             }
         }
 
@@ -309,7 +321,9 @@ impl Graph {
                         return Err(format!("Edge target '{}' not found in nodes", target));
                     }
                 }
-                Edge::Conditional { source, path_map, .. } => {
+                Edge::Conditional {
+                    source, path_map, ..
+                } => {
                     if !self.nodes.contains_key(source) {
                         return Err(format!("Edge source '{}' not found in nodes", source));
                     }

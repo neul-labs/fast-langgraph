@@ -5,16 +5,19 @@ This test suite verifies that our Rust implementation works correctly
 with real LangGraph usage patterns.
 """
 
-import pytest
 from typing import Annotated, TypedDict
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
+
+import pytest
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.message import add_messages
+
 from fast_langgraph import shim
 
 
 class State(TypedDict):
     """Simple state for testing."""
+
     value: int
     messages: Annotated[list, add_messages]
 
@@ -62,12 +65,7 @@ def test_conditional_routing():
     graph.add_node("increment", increment)
     graph.add_edge(START, "increment")
     graph.add_conditional_edges(
-        "increment",
-        should_continue,
-        {
-            "increment": "increment",
-            "done": END
-        }
+        "increment", should_continue, {"increment": "increment", "done": END}
     )
 
     app = graph.compile()
@@ -119,7 +117,9 @@ def test_parallel_branches():
     # multiple nodes writing to the same LastValue channel in one step.
     # This is by design in LangGraph, not a bug in our implementation.
 
-    pytest.skip("LangGraph doesn't support multiple writes to LastValue channel in one step")
+    pytest.skip(
+        "LangGraph doesn't support multiple writes to LastValue channel in one step"
+    )
 
 
 def test_streaming():
@@ -251,12 +251,7 @@ def test_complex_workflow():
 
     graph.add_edge(START, "start")
     graph.add_conditional_edges(
-        "start",
-        router,
-        {
-            "even_path": "even",
-            "odd_path": "odd"
-        }
+        "start", router, {"even_path": "even", "odd_path": "odd"}
     )
     graph.add_edge("even", "end")
     graph.add_edge("odd", "end")
@@ -265,14 +260,20 @@ def test_complex_workflow():
     app = graph.compile()
 
     # Test with even input
-    result1 = app.invoke({"value": 5, "messages": []})  # 5+1=6 (even) -> 6*2=12 -> 12+10=22
+    result1 = app.invoke(
+        {"value": 5, "messages": []}
+    )  # 5+1=6 (even) -> 6*2=12 -> 12+10=22
     assert result1["value"] == 22
 
     # Test with odd input
-    result2 = app.invoke({"value": 4, "messages": []})  # 4+1=5 (odd) -> 5*3=15 -> 15+10=25
+    result2 = app.invoke(
+        {"value": 4, "messages": []}
+    )  # 4+1=5 (odd) -> 5*3=15 -> 15+10=25
     assert result2["value"] == 25
 
-    print(f"✓ Complex workflow: even path={result1['value']}, odd path={result2['value']}")
+    print(
+        f"✓ Complex workflow: even path={result1['value']}, odd path={result2['value']}"
+    )
 
 
 def test_error_handling():
@@ -293,7 +294,7 @@ def test_error_handling():
     with pytest.raises(ValueError, match="Intentional error"):
         app.invoke({"value": 5, "messages": []})
 
-    print(f"✓ Error handling: errors properly propagated")
+    print("✓ Error handling: errors properly propagated")
 
 
 def test_state_mutations():
@@ -332,7 +333,7 @@ def test_state_mutations():
 
     assert result["value"] == 3
     assert execution_order == ["node1", "node2", "node3"]
-    print(f"✓ State mutations: execution order correct")
+    print("✓ State mutations: execution order correct")
 
 
 if __name__ == "__main__":
@@ -353,9 +354,9 @@ if __name__ == "__main__":
         ("State mutations", test_state_mutations),
     ]
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("LangGraph Compatibility Test Suite")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     passed = 0
     failed = 0
@@ -371,12 +372,13 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"✗ {name} FAILED: {e}")
             import traceback
+
             traceback.print_exc()
             failed += 1
         print()
 
-    print("="*60)
+    print("=" * 60)
     print(f"Results: {passed} passed, {failed} failed out of {len(tests)} tests")
-    print("="*60)
+    print("=" * 60)
 
     sys.exit(0 if failed == 0 else 1)

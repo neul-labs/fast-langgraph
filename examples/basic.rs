@@ -7,7 +7,7 @@ use std::sync::Arc;
 fn main() {
     // Create a new Pregel executor
     let mut executor: PregelExecutor<i32, i32> = PregelExecutor::new();
-    
+
     // Create a simple node that doubles its input
     let node = PregelNode {
         id: "double".to_string(),
@@ -15,16 +15,18 @@ fn main() {
         channels: vec!["input".to_string()],
         processor: Arc::new(|x: i32| Ok(x * 2)),
     };
-    
+
     // Add the node to the executor
     executor.add_node(node).expect("Failed to add node");
-    
+
     // Create a channel
     let channel = Arc::new(tokio::sync::RwLock::new(LastValueChannel::with_value(21)));
-    
+
     // Add the channel to the executor
-    executor.add_channel("input".to_string(), channel).expect("Failed to add channel");
-    
+    executor
+        .add_channel("input".to_string(), channel)
+        .expect("Failed to add channel");
+
     println!("LangGraph Rust implementation example");
     println!("Input: 21");
     println!("Node doubles the input");

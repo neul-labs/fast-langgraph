@@ -2,9 +2,11 @@
 Tests for Rust function caching module.
 """
 
-import pytest
 import time
-from fast_langgraph import RustFunctionCache, cached, RustTTLCache
+
+import pytest
+
+from fast_langgraph import RustFunctionCache, RustTTLCache, cached
 
 
 def test_rust_function_cache_basic():
@@ -177,6 +179,7 @@ def test_cached_decorator_with_kwargs():
 
 def test_cached_decorator_stats():
     """Test cached decorator statistics."""
+
     @cached
     def func(x):
         return x * 2
@@ -217,6 +220,7 @@ def test_cached_decorator_clear():
 
 def test_cached_decorator_contains():
     """Test checking if result is cached."""
+
     @cached
     def func(x, y=10):
         return x + y
@@ -229,6 +233,7 @@ def test_cached_decorator_contains():
 
 def test_cached_decorator_wrapped():
     """Test access to wrapped function."""
+
     def original_func(x):
         return x * 2
 
@@ -307,7 +312,7 @@ def test_ttl_cache_stats():
     assert stats["ttl"] == 10.0
     assert stats["hits"] == 2
     assert stats["misses"] == 1
-    assert abs(stats["hit_rate"] - 2.0/3.0) < 0.01
+    assert abs(stats["hit_rate"] - 2.0 / 3.0) < 0.01
 
 
 def test_ttl_cache_lru_eviction():
@@ -353,6 +358,7 @@ def test_cache_with_complex_objects():
 
 def test_cached_decorator_custom_size():
     """Test cached decorator with custom cache size."""
+
     @cached(max_size=2)
     def func(x):
         return x * 2
@@ -382,6 +388,7 @@ def test_cache_repr():
 
 def test_decorator_repr():
     """Test string representation of decorated function."""
+
     @cached
     def my_function(x):
         return x * 2

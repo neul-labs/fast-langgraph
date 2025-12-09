@@ -153,7 +153,7 @@ impl ChannelManager {
 
 /// Helper function to create channel manager from Python dict
 pub fn create_channel_manager_from_dict(
-    py: Python,
+    _py: Python,
     channels_dict: &PyDict,
 ) -> PyResult<ChannelManager> {
     let mut channels = HashMap::new();

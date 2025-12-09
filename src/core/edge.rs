@@ -9,27 +9,20 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub enum Edge {
     /// Direct edge: always go from source to target
-    Direct {
-        source: String,
-        target: String,
-    },
+    Direct { source: String, target: String },
 
     /// Conditional edge: evaluate a condition to determine next node
     Conditional {
         source: String,
-        condition: PyObject, // Function that returns next node name
+        condition: PyObject,               // Function that returns next node name
         branches: HashMap<String, String>, // condition_result -> target_node
     },
 
     /// Start edge: entry point to a node
-    Start {
-        target: String,
-    },
+    Start { target: String },
 
     /// End edge: marks a node as a termination point
-    End {
-        source: String,
-    },
+    End { source: String },
 }
 
 impl Edge {
@@ -124,7 +117,9 @@ impl std::fmt::Debug for Edge {
                 .field("source", source)
                 .field("target", target)
                 .finish(),
-            Edge::Conditional { source, branches, .. } => f
+            Edge::Conditional {
+                source, branches, ..
+            } => f
                 .debug_struct("Edge::Conditional")
                 .field("source", source)
                 .field("branches", branches)
@@ -133,10 +128,7 @@ impl std::fmt::Debug for Edge {
                 .debug_struct("Edge::Start")
                 .field("target", target)
                 .finish(),
-            Edge::End { source } => f
-                .debug_struct("Edge::End")
-                .field("source", source)
-                .finish(),
+            Edge::End { source } => f.debug_struct("Edge::End").field("source", source).finish(),
         }
     }
 }
@@ -181,11 +173,7 @@ mod tests {
             branches.insert("yes".to_string(), "node_yes".to_string());
             branches.insert("no".to_string(), "node_no".to_string());
 
-            let edge = Edge::conditional(
-                "node1".to_string(),
-                condition.to_object(py),
-                branches,
-            );
+            let edge = Edge::conditional("node1".to_string(), condition.to_object(py), branches);
 
             // Evaluate the condition
             let state = py.None();

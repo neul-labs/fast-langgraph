@@ -6,16 +6,17 @@ that optimize LangGraph's hot-path operations.
 """
 
 import pytest
+
 from fast_langgraph import (
-    merge_dicts,
-    deep_merge_dicts,
-    merge_many_dicts,
-    update_dict_inplace,
-    merge_lists,
     apply_writes_batch,
-    states_equal,
+    deep_merge_dicts,
     get_state_diff,
     langgraph_state_update,
+    merge_dicts,
+    merge_lists,
+    merge_many_dicts,
+    states_equal,
+    update_dict_inplace,
 )
 
 
@@ -51,11 +52,7 @@ def test_deep_merge_dicts():
 
     result = deep_merge_dicts(base, updates)
 
-    assert result == {
-        "a": {"b": 1, "c": 3, "e": 4},
-        "d": 3,
-        "f": 5
-    }
+    assert result == {"a": {"b": 1, "c": 3, "e": 4}, "d": 3, "f": 5}
 
 
 def test_deep_merge_replaces_non_dicts():
@@ -71,12 +68,7 @@ def test_deep_merge_replaces_non_dicts():
 
 def test_merge_many_dicts():
     """Test merging multiple dictionaries at once."""
-    dicts = [
-        {"a": 1},
-        {"b": 2},
-        {"c": 3},
-        {"a": 10}  # Overwrites earlier "a"
-    ]
+    dicts = [{"a": 1}, {"b": 2}, {"c": 3}, {"a": 10}]  # Overwrites earlier "a"
 
     result = merge_many_dicts(dicts)
 
@@ -125,11 +117,7 @@ def test_merge_lists_empty():
 def test_apply_writes_batch():
     """Test applying multiple writes to state."""
     state = {"count": 0, "items": []}
-    writes = [
-        {"count": 1},
-        {"count": 2, "name": "test"},
-        {"count": 3}
-    ]
+    writes = [{"count": 1}, {"count": 2, "name": "test"}, {"count": 3}]
 
     result = apply_writes_batch(state, writes)
 
@@ -220,10 +208,7 @@ def test_langgraph_state_update_append_creates_list():
     result = langgraph_state_update(state, updates, append_keys=["messages"])
 
     # Key didn't exist, so it gets created with the value
-    assert result == {
-        "count": 0,
-        "messages": [{"role": "user", "content": "test"}]
-    }
+    assert result == {"count": 0, "messages": [{"role": "user", "content": "test"}]}
 
 
 def test_langgraph_state_update_append_non_list():
@@ -249,31 +234,13 @@ def test_merge_dicts_with_none_values():
 
 def test_deep_merge_complex_nesting():
     """Test deep merge with complex nested structures."""
-    base = {
-        "level1": {
-            "level2": {
-                "level3": {"value": 1}
-            },
-            "other": 2
-        }
-    }
-    updates = {
-        "level1": {
-            "level2": {
-                "level3": {"value": 2, "new": 3}
-            }
-        }
-    }
+    base = {"level1": {"level2": {"level3": {"value": 1}}, "other": 2}}
+    updates = {"level1": {"level2": {"level3": {"value": 2, "new": 3}}}}
 
     result = deep_merge_dicts(base, updates)
 
     assert result == {
-        "level1": {
-            "level2": {
-                "level3": {"value": 2, "new": 3}
-            },
-            "other": 2
-        }
+        "level1": {"level2": {"level3": {"value": 2, "new": 3}}, "other": 2}
     }
 
 
