@@ -84,7 +84,16 @@ class TestShimModule:
         """Test getting patch status."""
         status = fast_langgraph.shim.get_patch_status()
         assert isinstance(status, dict)
-        assert all(isinstance(v, bool) for v in status.values())
+        # New structure has 'automatic', 'manual', and 'summary' keys
+        assert "automatic" in status
+        assert "manual" in status
+        assert "summary" in status
+        assert isinstance(status["automatic"], dict)
+        assert isinstance(status["manual"], dict)
+        assert isinstance(status["summary"], str)
+        # Check that automatic and manual contain bool values
+        assert all(isinstance(v, bool) for v in status["automatic"].values())
+        assert all(isinstance(v, bool) for v in status["manual"].values())
 
     @pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not available")
     def test_patch_unpatch_cycle(self):

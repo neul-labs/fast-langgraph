@@ -28,7 +28,7 @@ cargo test
 uv run pytest tests/
 
 # LangGraph compatibility
-python scripts/test_compatibility.py
+uv run python scripts/test_compatibility.py
 ```
 
 ## Code Quality

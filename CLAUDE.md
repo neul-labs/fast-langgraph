@@ -4,9 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fast LangGraph is a high-performance Rust implementation of core LangGraph components that provides 10-100x performance improvements for graph execution, state management, and checkpointing operations. The project uses a hybrid acceleration approach where performance-critical components are implemented in Rust and explicitly integrated into Python code.
+Fast LangGraph is a high-performance Rust implementation of core LangGraph components that provides 10-100x performance improvements for graph execution, state management, and checkpointing operations. The project offers two acceleration modes:
 
-**Important**: Direct class patching is disabled due to PyO3 isinstance() check incompatibility. The project uses explicit hybrid acceleration through `AcceleratedPregelLoop` and component-level Rust implementations.
+1. **Automatic Acceleration (Shim)**: Transparent patching requiring no code changes
+2. **Manual Acceleration**: Direct usage of Rust components for maximum performance
+
+**Note**: Direct class patching for CompiledStateGraph is disabled due to PyO3 isinstance() check incompatibility. However, function-level patching (executor caching, apply_writes) works transparently.
 
 ## Architecture
 
@@ -24,8 +27,11 @@ The codebase is organized into several key modules:
 
 ### Python Integration Layer
 - **`fast_langgraph/__init__.py`**: Package exports and imports
-- **`fast_langgraph/shim.py`**: No-op shim that prints availability message
+- **`fast_langgraph/shim.py`**: Automatic acceleration via transparent patching
 - **`fast_langgraph/accelerator.py`**: Python wrappers for Rust acceleration
+- **`fast_langgraph/executor_cache.py`**: Thread pool caching (2.3x speedup)
+- **`fast_langgraph/algo_shims.py`**: Accelerated algorithm functions
+- **`fast_langgraph/optimizations.py`**: Unified optimization entry point
 
 ### Core Architecture (rust-pregel)
 The pure Rust Pregel engine has been extracted to `~/rust-pregel` with:
@@ -65,7 +71,7 @@ uv run pytest tests/
 uv run pytest --cov=fast_langgraph tests/
 
 # Run LangGraph compatibility tests
-python scripts/test_compatibility.py --keep
+uv run python scripts/test_compatibility.py --keep
 
 # Run integration tests only
 uv run pytest -m integration
@@ -104,18 +110,40 @@ uv run maturin develop
 uv run python examples/simple_test.py
 ```
 
-## Key Integration Points
+## Acceleration Modes
 
-The project uses explicit hybrid acceleration rather than transparent patching:
+### Automatic Acceleration (Shim)
 
-1. **Hybrid Acceleration**: `AcceleratedPregelLoop` wraps execution with Rust performance
-2. **Direct Component Usage**: Import Rust components directly from `fast_langgraph`
-3. **Selective Enhancement**: Use specific accelerated components (ChannelManager, TaskScheduler, PregelAccelerator)
+Enable with environment variable or explicit call:
+```bash
+export FAST_LANGGRAPH_AUTO_PATCH=1
+```
+```python
+import fast_langgraph
+fast_langgraph.shim.patch_langgraph()
+```
 
-**Why No Transparent Patching?**
+**What gets patched automatically:**
+| Component | Speedup | Technical Detail |
+|-----------|---------|------------------|
+| Executor caching | 2.3x | Patches `langchain_core.runnables.config.get_executor_for_config` |
+| apply_writes | 1.2x | Patches `langgraph.pregel._algo.apply_writes` |
+
+### Manual Acceleration (Explicit Usage)
+
+For maximum performance, use Rust components directly:
+```python
+from fast_langgraph import (
+    RustSQLiteCheckpointer,  # 5-6x faster checkpointing
+    cached,                   # LLM response caching
+    langgraph_state_update,   # Fast state merging
+)
+```
+
+### Why Class Patching is Disabled
 - PyO3 classes don't support proper Python inheritance needed for CompiledStateGraph
 - isinstance() checks fail when modules cache imports before patching
-- Explicit integration provides better control and clearer performance boundaries
+- Function-level patching works fine and provides transparent acceleration
 
 ## Performance Considerations
 

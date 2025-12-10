@@ -21,9 +21,88 @@ Fast-LangGraph solves these by reimplementing critical paths in Rust while maint
 pip install fast-langgraph
 ```
 
+## Acceleration Modes
+
+Fast-LangGraph offers two types of acceleration:
+
+### Automatic Acceleration (via Shim)
+
+Enable transparent acceleration with a single environment variable or function call. No code changes required to your existing LangGraph application.
+
+```bash
+# Option 1: Environment variable (recommended for production)
+export FAST_LANGGRAPH_AUTO_PATCH=1
+python your_app.py
+```
+
+```python
+# Option 2: Explicit patching at startup
+import fast_langgraph
+fast_langgraph.shim.patch_langgraph()
+
+# Your existing LangGraph code runs faster automatically
+```
+
+**What gets accelerated automatically:**
+
+| Component | Speedup | Description |
+|-----------|---------|-------------|
+| Executor Caching | **2.3x** | Reuses ThreadPoolExecutor across invocations |
+| apply_writes | **1.2x** | Rust-based channel batch updates |
+
+**Combined automatic speedup: ~2.8x** for typical graph invocations.
+
+Check acceleration status:
+```python
+import fast_langgraph
+fast_langgraph.shim.print_status()
+```
+
+### Manual Acceleration (Explicit Usage)
+
+For maximum performance, use Rust components directly. These require small code changes but provide the largest speedups.
+
+```python
+from fast_langgraph import (
+    RustSQLiteCheckpointer,  # 5-6x faster checkpointing
+    cached,                   # LLM response caching
+    langgraph_state_update,   # Fast state merging
+)
+```
+
+| Component | Speedup | When to Use |
+|-----------|---------|-------------|
+| `RustSQLiteCheckpointer` | **5-6x** | State persistence |
+| `@cached` decorator | **10x+** | Repeated LLM calls (with 90% hit rate) |
+| `langgraph_state_update` | **13-46x** | High-frequency state updates |
+
 ## Quick Start
 
-### LLM Response Caching
+### 1. Automatic Acceleration (Easiest)
+
+```python
+# At the top of your application
+import fast_langgraph
+fast_langgraph.shim.patch_langgraph()
+
+# Rest of your code unchanged - runs 2-3x faster
+from langgraph.graph import StateGraph
+# ...
+```
+
+### 2. Fast Checkpointing (Biggest Impact)
+
+Drop-in replacement for LangGraph's SQLite checkpointer:
+
+```python
+from fast_langgraph import RustSQLiteCheckpointer
+
+# 5-6x faster than the default checkpointer
+checkpointer = RustSQLiteCheckpointer("state.db")
+graph = graph.compile(checkpointer=checkpointer)
+```
+
+### 3. LLM Response Caching
 
 Cache LLM responses to avoid redundant API calls:
 
@@ -45,19 +124,7 @@ print(call_llm.cache_stats())
 # {'hits': 1, 'misses': 1, 'size': 1}
 ```
 
-### Fast Checkpointing
-
-Drop-in replacement for LangGraph's SQLite checkpointer:
-
-```python
-from fast_langgraph import RustSQLiteCheckpointer
-
-# 5-6x faster than the default checkpointer
-checkpointer = RustSQLiteCheckpointer("state.db")
-graph = graph.compile(checkpointer=checkpointer)
-```
-
-### Optimized State Updates
+### 4. Optimized State Updates
 
 Efficient state merging for high-frequency updates:
 
@@ -71,7 +138,7 @@ new_state = langgraph_state_update(
 )
 ```
 
-### Performance Profiling
+### 5. Performance Profiling
 
 Find bottlenecks with minimal overhead:
 
