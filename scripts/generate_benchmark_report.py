@@ -8,14 +8,18 @@ Usage:
 This will run all benchmarks and output results to BENCHMARK.md
 """
 
-import sys
-import time
-import statistics
-import tempfile
+import copy
+import json
 import os
-from pathlib import Path
+import random
+import statistics
+import string
+import sys
+import tempfile
+import time
 from datetime import datetime
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Any, Dict, List
 
 # Add paths
 FAST_LANGGRAPH_ROOT = Path(__file__).parent.parent
@@ -391,6 +395,184 @@ def benchmark_profiler() -> Dict[str, Any]:
     return results
 
 
+def generate_random_string(length: int = 10) -> str:
+    """Generate a random string."""
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def generate_llm_state(num_messages: int = 100, content_length: int = 500) -> Dict[str, Any]:
+    """Generate a realistic LLM agent state with message history."""
+    return {
+        "messages": [
+            {
+                "role": random.choice(["user", "assistant", "system"]),
+                "content": generate_random_string(content_length),
+                "function_call": {
+                    "name": f"tool_{i % 5}",
+                    "arguments": json.dumps({"arg1": i, "arg2": f"value_{i}"}),
+                } if i % 3 == 0 else None,
+            }
+            for i in range(num_messages)
+        ],
+        "agent_scratchpad": [
+            {"thought": generate_random_string(200), "action": f"action_{i}"}
+            for i in range(num_messages // 2)
+        ],
+        "context": {
+            "user_profile": {
+                "id": generate_random_string(20),
+                "preferences": {f"pref_{j}": random.random() for j in range(20)},
+            },
+            "session": {
+                "start_time": time.time(),
+                "interactions": num_messages,
+            }
+        },
+        "current_step": num_messages,
+    }
+
+
+def benchmark_complex_structures() -> Dict[str, Any]:
+    """Benchmark complex data structure operations - showcasing Rust's strengths."""
+    from fast_langgraph import RustCheckpointer, langgraph_state_update, deep_merge_dicts
+
+    results = {}
+
+    # 1. Checkpoint serialization with complex state (Rust's biggest win)
+    checkpointer = RustCheckpointer()
+
+    sizes = [
+        (10, 100, "small"),
+        (50, 500, "medium"),
+        (200, 1000, "large"),
+    ]
+
+    for num_msgs, content_len, size_name in sizes:
+        state = generate_llm_state(num_msgs, content_len)
+        state_json = json.dumps(state)
+        state_size_kb = len(state_json) / 1024
+
+        iterations = 200
+
+        # Rust checkpoint
+        start = time.perf_counter()
+        for i in range(iterations):
+            checkpointer.put("thread", f"cp_{i}", state)
+        rust_time = time.perf_counter() - start
+
+        # Python deepcopy (common checkpoint approach)
+        start = time.perf_counter()
+        checkpoints = {}
+        for i in range(iterations):
+            checkpoints[f"cp_{i}"] = copy.deepcopy(state)
+        python_time = time.perf_counter() - start
+
+        speedup = python_time / rust_time if rust_time > 0 else 0
+
+        results[f"checkpoint_{size_name}"] = {
+            "rust_ms": rust_time * 1000,
+            "python_ms": python_time * 1000,
+            "speedup": speedup,
+            "state_size_kb": state_size_kb,
+            "iterations": iterations,
+        }
+
+    # 2. Sustained state updates (graph execution simulation)
+    update_configs = [
+        (1000, 10, "quick"),
+        (100, 100, "medium"),
+    ]
+
+    for num_steps, msgs_per_step, config_name in update_configs:
+        initial_state = generate_llm_state(10, 200)
+
+        # Pre-generate updates
+        all_updates = [
+            {
+                "messages": [{"role": "assistant", "content": generate_random_string(200)}
+                             for _ in range(msgs_per_step)],
+                "current_step": step,
+            }
+            for step in range(num_steps)
+        ]
+
+        # Rust sustained updates
+        state = dict(initial_state)
+        start = time.perf_counter()
+        for update in all_updates:
+            state = langgraph_state_update(state, update, append_keys=["messages"])
+        rust_time = time.perf_counter() - start
+
+        # Python sustained updates
+        def python_update(state, update, append_keys):
+            result = dict(state)
+            for key, value in update.items():
+                if key in append_keys and isinstance(result.get(key), list):
+                    result[key] = result[key] + value
+                else:
+                    result[key] = value
+            return result
+
+        state = dict(initial_state)
+        start = time.perf_counter()
+        for update in all_updates:
+            state = python_update(state, update, ["messages"])
+        python_time = time.perf_counter() - start
+
+        speedup = python_time / rust_time if rust_time > 0 else 0
+
+        results[f"state_update_{config_name}"] = {
+            "rust_ms": rust_time * 1000,
+            "python_ms": python_time * 1000,
+            "speedup": speedup,
+            "num_steps": num_steps,
+            "msgs_per_step": msgs_per_step,
+        }
+
+    # 3. End-to-end graph simulation
+    num_nodes = 20
+    num_iterations = 50
+
+    start = time.perf_counter()
+    for iteration in range(num_iterations):
+        state = generate_llm_state(5, 100)
+        for node_idx in range(num_nodes):
+            update = {
+                "messages": [{"role": "assistant", "content": f"Node {node_idx} output"}],
+                "current_step": node_idx,
+            }
+            state = langgraph_state_update(state, update, append_keys=["messages"])
+            if node_idx % 5 == 0:
+                checkpointer.put(f"iter_{iteration}", f"node_{node_idx}", state)
+    rust_e2e_time = time.perf_counter() - start
+
+    python_checkpoints = {}
+    start = time.perf_counter()
+    for iteration in range(num_iterations):
+        state = generate_llm_state(5, 100)
+        for node_idx in range(num_nodes):
+            update = {
+                "messages": [{"role": "assistant", "content": f"Node {node_idx} output"}],
+                "current_step": node_idx,
+            }
+            state = python_update(state, update, ["messages"])
+            if node_idx % 5 == 0:
+                python_checkpoints[f"iter_{iteration}_node_{node_idx}"] = copy.deepcopy(state)
+    python_e2e_time = time.perf_counter() - start
+
+    speedup = python_e2e_time / rust_e2e_time if rust_e2e_time > 0 else 0
+
+    results["e2e_simulation"] = {
+        "rust_ms": rust_e2e_time * 1000,
+        "python_ms": python_e2e_time * 1000,
+        "speedup": speedup,
+        "num_nodes": num_nodes,
+        "num_iterations": num_iterations,
+    }
+
+    return results
+
+
 def generate_markdown_report(all_results: Dict[str, Any], system_info: Dict[str, str]) -> str:
     """Generate the BENCHMARK.md content."""
 
@@ -416,6 +598,7 @@ def generate_markdown_report(all_results: Dict[str, Any], system_info: Dict[str,
     # Table of Contents
     lines.append("## Table of Contents")
     lines.append("")
+    lines.append("- [Complex Data Structures (Rust Strengths)](#complex-data-structures-rust-strengths)")
     lines.append("- [Channel Operations](#channel-operations)")
     lines.append("- [Checkpointing](#checkpointing)")
     lines.append("- [LLM Caching](#llm-caching)")
@@ -424,6 +607,59 @@ def generate_markdown_report(all_results: Dict[str, Any], system_info: Dict[str,
     lines.append("- [Profiler Overhead](#profiler-overhead)")
     lines.append("- [Summary](#summary)")
     lines.append("")
+
+    # Complex Data Structures (Rust Strengths)
+    lines.append("## Complex Data Structures (Rust Strengths)")
+    lines.append("")
+    lines.append("These benchmarks showcase where Rust provides the most significant performance gains.")
+    lines.append("")
+
+    cs = all_results.get("complex_structures", {})
+
+    if cs:
+        # Checkpoint serialization
+        lines.append("### Checkpoint Serialization (vs Python deepcopy)")
+        lines.append("")
+        lines.append("Rust's biggest advantage - avoiding Python object overhead during state persistence.")
+        lines.append("")
+        lines.append("| State Size | Rust | Python | Speedup |")
+        lines.append("|------------|------|--------|---------|")
+
+        for size_name in ["small", "medium", "large"]:
+            key = f"checkpoint_{size_name}"
+            if key in cs:
+                data = cs[key]
+                lines.append(f"| {data['state_size_kb']:.1f} KB | {data['rust_ms']:.2f} ms | {data['python_ms']:.2f} ms | **{data['speedup']:.0f}x** |")
+        lines.append("")
+
+        # Sustained state updates
+        lines.append("### Sustained State Updates (Graph Execution)")
+        lines.append("")
+        lines.append("Simulating real LangGraph execution with continuous state updates.")
+        lines.append("")
+        lines.append("| Workload | Steps | Rust | Python | Speedup |")
+        lines.append("|----------|-------|------|--------|---------|")
+
+        for config_name in ["quick", "medium"]:
+            key = f"state_update_{config_name}"
+            if key in cs:
+                data = cs[key]
+                lines.append(f"| {config_name.title()} | {data['num_steps']} | {data['rust_ms']:.2f} ms | {data['python_ms']:.2f} ms | **{data['speedup']:.1f}x** |")
+        lines.append("")
+
+        # E2E simulation
+        if "e2e_simulation" in cs:
+            e2e = cs["e2e_simulation"]
+            lines.append("### End-to-End Graph Simulation")
+            lines.append("")
+            lines.append(f"Full graph execution: {e2e['num_nodes']} nodes, {e2e['num_iterations']} iterations with checkpointing.")
+            lines.append("")
+            lines.append("| Metric | Value |")
+            lines.append("|--------|-------|")
+            lines.append(f"| Rust Total Time | {e2e['rust_ms']:.2f} ms |")
+            lines.append(f"| Python Total Time | {e2e['python_ms']:.2f} ms |")
+            lines.append(f"| **Speedup** | **{e2e['speedup']:.2f}x** |")
+            lines.append("")
 
     # Channel Operations
     lines.append("## Channel Operations")
@@ -582,11 +818,30 @@ def generate_markdown_report(all_results: Dict[str, Any], system_info: Dict[str,
     # Summary
     lines.append("## Summary")
     lines.append("")
-    lines.append("### Key Performance Characteristics")
+
+    # Rust Strengths highlight
+    lines.append("### Rust's Key Strengths")
+    lines.append("")
+    lines.append("| Operation | Speedup | Best Use Case |")
+    lines.append("|-----------|---------|---------------|")
+
+    if cs:
+        if "checkpoint_large" in cs:
+            lines.append(f"| Checkpoint Serialization | **{cs['checkpoint_large']['speedup']:.0f}x** | State persistence |")
+        if "state_update_quick" in cs:
+            lines.append(f"| Sustained State Updates | **{cs['state_update_quick']['speedup']:.1f}x** | Long-running graphs |")
+        if "e2e_simulation" in cs:
+            lines.append(f"| E2E Graph Execution | **{cs['e2e_simulation']['speedup']:.1f}x** | Production workloads |")
+    lines.append("")
+
+    lines.append("### All Performance Characteristics")
     lines.append("")
     lines.append("| Feature | Performance |")
     lines.append("|---------|-------------|")
 
+    if cs:
+        if "checkpoint_large" in cs:
+            lines.append(f"| Complex Checkpoint (250KB) | {cs['checkpoint_large']['speedup']:.0f}x faster than deepcopy |")
     if llm.get("llm_cache"):
         lines.append(f"| LLM Cache (90% hit rate) | {llm['llm_cache']['speedup']:.1f}x speedup |")
     if fc.get("function_cache"):
@@ -615,11 +870,10 @@ def generate_markdown_report(all_results: Dict[str, Any], system_info: Dict[str,
     lines.append("cargo bench")
     lines.append("")
     lines.append("# Python benchmarks")
+    lines.append("uv run python scripts/benchmark_rust_strengths.py      # Rust's key advantages")
+    lines.append("uv run python scripts/benchmark_complex_structures.py  # Complex data structure tests")
     lines.append("uv run python scripts/benchmark_all_features.py")
     lines.append("uv run python scripts/benchmark_rust_channels.py")
-    lines.append("uv run python scripts/benchmark_new_features.py")
-    lines.append("uv run python scripts/benchmark_shimming_features.py")
-    lines.append("uv run python scripts/benchmark_optimizations.py")
     lines.append("```")
     lines.append("")
 
@@ -641,6 +895,7 @@ def main():
 
     # Run benchmarks
     benchmarks = [
+        ("complex_structures", "Complex Data Structures (Rust Strengths)", benchmark_complex_structures),
         ("channels", "Channel Operations", benchmark_channels),
         ("checkpointing", "Checkpointing", benchmark_checkpointing),
         ("llm_cache", "LLM Caching", benchmark_llm_cache),

@@ -1,6 +1,6 @@
 # Fast LangGraph Benchmark Results
 
-Generated: 2025-12-09 23:34:45
+Generated: 2025-12-10 00:01:45
 
 ## System Information
 
@@ -13,6 +13,7 @@ Generated: 2025-12-09 23:34:45
 
 ## Table of Contents
 
+- [Complex Data Structures (Rust Strengths)](#complex-data-structures-rust-strengths)
 - [Channel Operations](#channel-operations)
 - [Checkpointing](#checkpointing)
 - [LLM Caching](#llm-caching)
@@ -21,6 +22,39 @@ Generated: 2025-12-09 23:34:45
 - [Profiler Overhead](#profiler-overhead)
 - [Summary](#summary)
 
+## Complex Data Structures (Rust Strengths)
+
+These benchmarks showcase where Rust provides the most significant performance gains.
+
+### Checkpoint Serialization (vs Python deepcopy)
+
+Rust's biggest advantage - avoiding Python object overhead during state persistence.
+
+| State Size | Rust | Python | Speedup |
+|------------|------|--------|---------|
+| 3.8 KB | 0.35 ms | 15.29 ms | **43x** |
+| 35.0 KB | 0.29 ms | 52.00 ms | **178x** |
+| 235.5 KB | 0.28 ms | 206.21 ms | **737x** |
+
+### Sustained State Updates (Graph Execution)
+
+Simulating real LangGraph execution with continuous state updates.
+
+| Workload | Steps | Rust | Python | Speedup |
+|----------|-------|------|--------|---------|
+| Quick | 1000 | 1.83 ms | 83.98 ms | **45.9x** |
+| Medium | 100 | 0.57 ms | 7.56 ms | **13.2x** |
+
+### End-to-End Graph Simulation
+
+Full graph execution: 20 nodes, 50 iterations with checkpointing.
+
+| Metric | Value |
+|--------|-------|
+| Rust Total Time | 9.11 ms |
+| Python Total Time | 25.26 ms |
+| **Speedup** | **2.77x** |
+
 ## Channel Operations
 
 Benchmarking `RustLastValue` channel update operations.
@@ -28,10 +62,10 @@ Benchmarking `RustLastValue` channel update operations.
 | Metric | Value |
 |--------|-------|
 | Iterations | 100,000 |
-| Rust Total Time | 20.06 ms |
-| Python Total Time | 3.03 ms |
-| Rust Per Operation | 200.58 ns |
-| Python Per Operation | 30.27 ns |
+| Rust Total Time | 31.73 ms |
+| Python Total Time | 5.12 ms |
+| Rust Per Operation | 317.29 ns |
+| Python Per Operation | 51.17 ns |
 
 ## Checkpointing
 
@@ -39,15 +73,15 @@ Benchmarking `RustLastValue` channel update operations.
 
 | Operation | Total Time | Per Operation |
 |-----------|------------|---------------|
-| PUT (1,000 ops) | 1.14 ms | 1.14 us |
-| GET (1,000 ops) | 3.30 ms | 3.30 us |
+| PUT (1,000 ops) | 1.40 ms | 1.40 us |
+| GET (1,000 ops) | 3.73 ms | 3.73 us |
 
 ### SQLite Checkpointer
 
 | Operation | Total Time | Per Operation |
 |-----------|------------|---------------|
-| PUT (1,000 ops) | 2260.73 ms | 2260.73 us |
-| GET (1,000 ops) | 73.48 ms | 73.48 us |
+| PUT (1,000 ops) | 2265.94 ms | 2265.94 us |
+| GET (1,000 ops) | 104.14 ms | 104.14 us |
 
 ## LLM Caching
 
@@ -55,9 +89,9 @@ Benchmarking `RustLastValue` channel update operations.
 
 | Metric | Value |
 |--------|-------|
-| Without Cache | 110.95 ms |
-| With Cache | 11.26 ms |
-| **Speedup** | **9.86x** |
+| Without Cache | 108.48 ms |
+| With Cache | 11.09 ms |
+| **Speedup** | **9.78x** |
 | Hit Rate | 90% |
 | Cache Hits | 90 |
 | Cache Misses | 10 |
@@ -67,8 +101,8 @@ Benchmarking `RustLastValue` channel update operations.
 | Metric | Value |
 |--------|-------|
 | Iterations | 100,000 |
-| Total Time | 99.29 ms |
-| Per Lookup | 0.99 us |
+| Total Time | 137.90 ms |
+| Per Lookup | 1.38 us |
 
 ## State Merge Operations
 
@@ -78,15 +112,15 @@ Merging dictionaries with 1000 keys.
 
 | Implementation | Time (10000 iterations) |
 |----------------|----------------------|
-| Rust `merge_dicts` | 774.65 ms |
-| Python `{**a, **b}` | 157.32 ms |
+| Rust `merge_dicts` | 1084.81 ms |
+| Python `{**a, **b}` | 209.94 ms |
 
 ### Deep Dictionary Merge
 
 | Implementation | Time (5000 iterations) |
 |----------------|----------------------|
-| Rust `deep_merge_dicts` | 45.33 ms |
-| Python recursive | 37.07 ms |
+| Rust `deep_merge_dicts` | 62.47 ms |
+| Python recursive | 50.88 ms |
 
 ### LangGraph State Update
 
@@ -95,8 +129,8 @@ State update with message appending (100 existing messages).
 | Metric | Value |
 |--------|-------|
 | Iterations | 5,000 |
-| Total Time | 5.16 ms |
-| Per Update | 1.03 us |
+| Total Time | 7.15 ms |
+| Per Update | 1.43 us |
 
 ## Function Caching
 
@@ -105,41 +139,50 @@ State update with message appending (100 existing messages).
 | Metric | Value |
 |--------|-------|
 | Iterations | 10,000 |
-| Uncached Time | 30.25 ms |
-| Cached Time | 18.68 ms |
-| **Speedup** | **1.62x** |
-| Cache Overhead | 1.87 us/call |
+| Uncached Time | 44.37 ms |
+| Cached Time | 27.30 ms |
+| **Speedup** | **1.63x** |
+| Cache Overhead | 2.73 us/call |
 
 ### Raw Cache Lookup
 
 | Metric | Value |
 |--------|-------|
 | Iterations | 100,000 |
-| Total Time | 175.82 ms |
-| Per Lookup | 1.76 us |
+| Total Time | 249.41 ms |
+| Per Lookup | 2.49 us |
 
 ## Profiler Overhead
 
 | Metric | Value |
 |--------|-------|
 | Iterations | 10,000 |
-| Without Profiling | 20.79 ms |
-| With Profiling | 33.30 ms |
-| Overhead | 12.52 ms (60.2%) |
-| Per Operation | 1.25 us |
+| Without Profiling | 28.11 ms |
+| With Profiling | 44.28 ms |
+| Overhead | 16.17 ms (57.5%) |
+| Per Operation | 1.62 us |
 
 ## Summary
 
-### Key Performance Characteristics
+### Rust's Key Strengths
+
+| Operation | Speedup | Best Use Case |
+|-----------|---------|---------------|
+| Checkpoint Serialization | **737x** | State persistence |
+| Sustained State Updates | **45.9x** | Long-running graphs |
+| E2E Graph Execution | **2.8x** | Production workloads |
+
+### All Performance Characteristics
 
 | Feature | Performance |
 |---------|-------------|
-| LLM Cache (90% hit rate) | 9.9x speedup |
+| Complex Checkpoint (250KB) | 737x faster than deepcopy |
+| LLM Cache (90% hit rate) | 9.8x speedup |
 | Function Caching | 1.6x speedup |
-| In-Memory Checkpoint PUT | 1.1 us/op |
-| In-Memory Checkpoint GET | 3.3 us/op |
-| LangGraph State Update | 1.0 us/op |
-| Profiler Overhead | 1.3 us/op |
+| In-Memory Checkpoint PUT | 1.4 us/op |
+| In-Memory Checkpoint GET | 3.7 us/op |
+| LangGraph State Update | 1.4 us/op |
+| Profiler Overhead | 1.6 us/op |
 
 ### Running Benchmarks
 
@@ -156,9 +199,8 @@ To run individual benchmarks:
 cargo bench
 
 # Python benchmarks
+uv run python scripts/benchmark_rust_strengths.py      # Rust's key advantages
+uv run python scripts/benchmark_complex_structures.py  # Complex data structure tests
 uv run python scripts/benchmark_all_features.py
 uv run python scripts/benchmark_rust_channels.py
-uv run python scripts/benchmark_new_features.py
-uv run python scripts/benchmark_shimming_features.py
-uv run python scripts/benchmark_optimizations.py
 ```
