@@ -49,12 +49,32 @@ uv run mypy fast_langgraph/
 ## Benchmarks
 
 ```bash
-# Rust benchmarks
-cargo bench
+# Generate full benchmark report (updates BENCHMARK.md)
+uv run python scripts/generate_benchmark_report.py
 
-# Python benchmarks
+# Rust's key strengths (checkpoint, state updates)
+uv run python scripts/benchmark_rust_strengths.py
+
+# Complex data structure benchmarks
+uv run python scripts/benchmark_complex_structures.py
+
+# All features benchmark
 uv run python scripts/benchmark_all_features.py
+
+# Rust-only benchmarks (criterion)
+cargo bench
 ```
+
+### Benchmark Results
+
+See [BENCHMARK.md](../BENCHMARK.md) for detailed results. Key findings:
+
+| Operation | Speedup | Notes |
+|-----------|---------|-------|
+| Checkpoint (250KB state) | **737x** | vs Python deepcopy |
+| Checkpoint (35KB state) | **178x** | vs Python deepcopy |
+| Sustained state updates | **13-46x** | Scales with iterations |
+| E2E graph execution | **2-3x** | With checkpointing |
 
 ## Project Structure
 

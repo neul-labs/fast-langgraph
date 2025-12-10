@@ -39,7 +39,7 @@ Fast-LangGraph is a hybrid Rust/Python library. Performance-critical components 
 
 Python's Global Interpreter Lock (GIL) and dynamic typing create overhead for:
 
-1. **Hash table operations** - Cache lookups, state management
+1. **Object copying** - `deepcopy()` is expensive for nested structures
 2. **Serialization** - Checkpoint encoding/decoding
 3. **Memory management** - Frequent allocations in hot paths
 
@@ -48,6 +48,18 @@ Rust provides:
 - No GIL (true parallelism possible)
 - Predictable memory layout
 - Compile-time optimizations
+
+### Where Rust Excels (Benchmarks)
+
+Based on [BENCHMARK.md](../BENCHMARK.md), Rust provides the most dramatic improvements for:
+
+| Operation | Speedup | Why |
+|-----------|---------|-----|
+| **Checkpoint serialization** | 43-737x | Avoids Python `deepcopy()` overhead entirely |
+| **Sustained state updates** | 13-46x | No intermediate Python object creation |
+| **E2E graph execution** | 2-3x | Combined state + checkpoint benefits |
+
+**Important**: Python's built-in `dict` is already implemented in C and highly optimized. For simple dict operations (lookups, single merges), Python is competitive. Rust's advantage comes from avoiding Python object overhead in complex, sustained operations.
 
 ## Component Design
 
@@ -174,10 +186,17 @@ Build produces a wheel containing:
 - Pure Python modules (`fast_langgraph/*.py`)
 - Compiled Rust extension (`fast_langgraph.cpython-*.so`)
 
-## Limitations
+## Limitations & Trade-offs
 
-1. **Serialization boundary** - Data crossing Python/Rust boundary has overhead
-2. **Complex types** - Best for simple, serializable data (strings, dicts)
+1. **PyO3 boundary overhead** - Data crossing Python/Rust boundary has overhead (~1-2μs per call). This means:
+   - Simple dict lookups are faster in pure Python
+   - Rust wins when avoiding repeated Python operations (checkpoints, sustained updates)
+
+2. **Best for complex operations** - Use Rust components for:
+   - Large state (>10KB): Checkpoint serialization is 100x+ faster
+   - Many operations (100+ steps): Sustained state updates are 10x+ faster
+   - Use Python for simple, one-shot operations
+
 3. **Not thread-safe by default** - Use `threading.Lock` for concurrent access
 
 ## Future Directions

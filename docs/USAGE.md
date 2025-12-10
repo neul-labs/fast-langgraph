@@ -2,6 +2,19 @@
 
 Detailed API documentation and usage patterns for Fast-LangGraph.
 
+## Performance Overview
+
+Fast-LangGraph provides dramatic speedups for specific operations. See [BENCHMARK.md](../BENCHMARK.md) for detailed measurements.
+
+| Operation | Speedup | When to Use |
+|-----------|---------|-------------|
+| Checkpoint Serialization | **43-737x** | Complex state with many messages |
+| Sustained State Updates | **13-46x** | Long-running graphs (100+ steps) |
+| E2E Graph Execution | **2-3x** | Production with checkpointing |
+| LLM Caching | **10x** | Repeated prompts (90% hit rate) |
+
+> **Key insight**: Rust excels at avoiding Python object overhead. The speedup scales with state complexity and operation frequency.
+
 ## Caching
 
 ### The `@cached` Decorator
