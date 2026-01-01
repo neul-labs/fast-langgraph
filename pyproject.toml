@@ -1,6 +1,6 @@
 [project]
 name = "fast-langgraph"
-version = "0.1.0"
+dynamic = ["version"]
 description = "High-performance Rust implementation of LangGraph components"
 authors = [{ name = "Neul Labs", email = "hello@neul.ai" }]
 license = { text = "MIT" }
