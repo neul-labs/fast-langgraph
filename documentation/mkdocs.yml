@@ -1,0 +1,97 @@
+site_name: Fast-LangGraph
+site_description: High-performance Rust accelerators for LangGraph applications
+site_url: https://neul-labs.github.io/fast-langgraph
+repo_url: https://github.com/neul-labs/fast-langgraph
+repo_name: neul-labs/fast-langgraph
+edit_uri: edit/main/documentation/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+plugins:
+  - search
+  - autorefs
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+  - User Guide:
+    - Overview: user-guide/overview.md
+    - Automatic Acceleration: user-guide/automatic-acceleration.md
+    - Manual Acceleration: user-guide/manual-acceleration.md
+    - Caching: user-guide/caching.md
+    - Checkpointing: user-guide/checkpointing.md
+    - State Operations: user-guide/state-operations.md
+    - Profiling: user-guide/profiling.md
+  - Reference:
+    - API Reference: reference/api.md
+    - Configuration: reference/configuration.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Architecture: development/architecture.md
+    - Benchmarks: development/benchmarks.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/neul-labs/fast-langgraph
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/fast-langgraph/
+  version:
+    provider: mike
+
+copyright: Copyright &copy; 2024 Neul Labs
