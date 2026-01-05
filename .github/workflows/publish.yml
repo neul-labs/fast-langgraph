@@ -12,6 +12,10 @@ on:
         default: 'false'
         type: boolean
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PACKAGE_NAME: fast_langgraph
   PYTHON_VERSION: '3.12'

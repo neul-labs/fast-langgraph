@@ -9,7 +9,7 @@ repository = "https://github.com/neul-labs/fast-langgraph"
 homepage = "https://github.com/neul-labs/fast-langgraph"
 documentation = "https://github.com/neul-labs/fast-langgraph/tree/main/documentation/docs"
 readme = "README.md"
-keywords = ["langgraph", "rust", "ai", "graph", "performance"]
+keywords = ["langgraph", "rust", "pregel", "ai", "graph", "performance"]
 categories = ["science", "algorithms", "data-structures"]
 
 [lib]
