@@ -94,6 +94,13 @@ result = graph.invoke(
 - Python 3.9+
 - Works with any LangGraph version
 
+## Project Metadata
+
+- **Author:** Dipankar Sarkar (<me@dipankar.name>)
+- **Organization:** Neul Labs
+- **Repository:** [https://github.com/neul-labs/fast-langgraph](https://github.com/neul-labs/fast-langgraph)
+- **License:** MIT
+
 ## Next Steps
 
 <div class="grid cards" markdown>

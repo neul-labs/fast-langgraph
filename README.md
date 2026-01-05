@@ -191,10 +191,20 @@ These are the operations where Rust provides the most dramatic improvements:
 
 ## Documentation
 
-- [Benchmarks](BENCHMARK.md) - Detailed performance measurements
-- [Usage Guide](docs/USAGE.md) - Detailed API documentation and examples
-- [Architecture](docs/ARCHITECTURE.md) - How Fast-LangGraph works internally
-- [Development](docs/DEVELOPMENT.md) - Building from source and contributing
+Authoritative docs live under [`documentation/docs/`](documentation/docs/index.md) and power the MkDocs site.
+
+- [Getting Started](documentation/docs/getting-started/quickstart.md) - Installation + first run
+- [User Guide](documentation/docs/user-guide/overview.md) - Automatic/manual acceleration details
+- [API Reference](documentation/docs/reference/api.md) - Python + Rust surface area
+- [Architecture](documentation/docs/development/architecture.md) - Internal design + trade-offs
+- [Contributing](documentation/docs/development/contributing.md) - Tooling, tests, and release flow
+
+## Project Metadata
+
+- **Author:** Dipankar Sarkar (<me@dipankar.name>)
+- **Organization:** Neul Labs
+- **Repository:** https://github.com/neul-labs/fast-langgraph
+- **License:** MIT
 
 ## Examples
 
@@ -205,7 +215,7 @@ See the [examples/](examples/) directory for complete working examples:
 
 ## Contributing
 
-Contributions welcome! See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for setup instructions.
+Contributions welcome! See [documentation/docs/development/contributing.md](documentation/docs/development/contributing.md) for setup instructions.
 
 ## License
 
