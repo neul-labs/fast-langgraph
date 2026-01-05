@@ -1,12 +1,12 @@
 [package]
 name = "fast-langgraph"
-version = "0.1.0"
+version = "0.1.13"
 edition = "2021"
 description = "High-performance Rust implementation of LangGraph components"
 license = "MIT"
-repository = "https://github.com/langchain-ai/langgraph"
-homepage = "https://github.com/langchain-ai/langgraph"
-documentation = "https://langchain-ai.github.io/langgraph/"
+repository = "https://github.com/neul-labs/fast-langgraph"
+homepage = "https://github.com/neul-labs/fast-langgraph"
+documentation = "https://github.com/neul-labs/fast-langgraph"
 readme = "README.md"
 keywords = ["langgraph", "rust", "ai", "graph", "performance"]
 categories = ["science", "algorithms", "data-structures"]

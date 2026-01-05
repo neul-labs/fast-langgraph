@@ -21,6 +21,12 @@ Fast-LangGraph solves these by reimplementing critical paths in Rust while maint
 pip install fast-langgraph
 ```
 
+or
+
+```bash
+uv add fast-langgraph
+```
+
 ## Acceleration Modes
 
 Fast-LangGraph offers two types of acceleration:
