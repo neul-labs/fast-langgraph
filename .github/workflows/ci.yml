@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write  # Required for auto-tagging on version bump
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
@@ -74,3 +77,39 @@ jobs:
 
       - name: Run tests
         run: uv run pytest tests/ -v
+
+      - name: Auto-tag on version bump
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Get current version from Cargo.toml
+          CURRENT_VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Check if parent commit had Cargo.toml
+          PARENT_CARGO=$(git show HEAD~1:Cargo.toml 2>/dev/null || echo "")
+
+          if [ -z "$PARENT_CARGO" ]; then
+            echo "No parent Cargo.toml found, skipping tag creation"
+            exit 0
+          fi
+
+          # Get parent version
+          PARENT_VERSION=$(echo "$PARENT_CARGO" | grep '^version = ' | sed 's/version = "\(.*\)"/\1/')
+          echo "Parent version: $PARENT_VERSION"
+
+          # Create tag if version changed
+          if [ "$CURRENT_VERSION" != "$PARENT_VERSION" ]; then
+            echo "Version changed from $PARENT_VERSION to $CURRENT_VERSION, creating tag..."
+            TAG_NAME="v$CURRENT_VERSION"
+
+            # Check if tag already exists
+            if git rev-parse "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
+              echo "Tag $TAG_NAME already exists, skipping"
+            else
+              git tag "$TAG_NAME"
+              git push origin "$TAG_NAME"
+              echo "Created and pushed tag $TAG_NAME"
+            fi
+          else
+            echo "Version unchanged, no tag needed"
+          fi
