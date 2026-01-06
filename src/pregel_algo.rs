@@ -217,6 +217,7 @@ pub fn should_interrupt(
 }
 
 /// Increment version counter
+#[inline]
 pub fn increment_version(current: Option<usize>) -> usize {
     current.map(|v| v + 1).unwrap_or(1)
 }

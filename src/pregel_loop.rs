@@ -19,8 +19,6 @@ pub struct PregelConfig {
     pub interrupt_before: Vec<String>,
     /// Nodes to interrupt after execution
     pub interrupt_after: Vec<String>,
-    /// Enable debug output
-    pub debug: bool,
 }
 
 impl Default for PregelConfig {
@@ -29,7 +27,6 @@ impl Default for PregelConfig {
             recursion_limit: 25,
             interrupt_before: Vec::new(),
             interrupt_after: Vec::new(),
-            debug: false,
         }
     }
 }
@@ -204,6 +201,10 @@ impl PregelLoop {
 
         // Get the node to check its output channels
         if let Some(node) = self.nodes.get(&task.name) {
+            // Pre-allocate based on channel count for better performance
+            if !node.channels.is_empty() {
+                writes = Vec::with_capacity(node.channels.len());
+            }
             if !node.channels.is_empty() {
                 // Node specifies output channels
                 if result.as_ref(py).is_instance_of::<PyDict>() {
@@ -310,10 +311,6 @@ impl PregelLoop {
             }
 
             self.step += 1;
-
-            if self.config.debug {
-                eprintln!("Step {}: {} tasks executed", self.step, task_writes.len());
-            }
         }
 
         if self.step >= self.config.recursion_limit {
@@ -403,10 +400,6 @@ impl PregelLoop {
             results.push(current_state);
 
             self.step += 1;
-
-            if self.config.debug {
-                eprintln!("Step {}: {} tasks executed", self.step, task_writes.len());
-            }
         }
 
         if self.step >= self.config.recursion_limit {
@@ -447,6 +440,5 @@ mod tests {
         assert_eq!(config.recursion_limit, 25);
         assert_eq!(config.interrupt_before.len(), 0);
         assert_eq!(config.interrupt_after.len(), 0);
-        assert!(!config.debug);
     }
 }

@@ -4,11 +4,11 @@
 
 | Metric | Value |
 |--------|-------|
-| **Test Date** | 2025-12-10 00:44:28 UTC |
-| **LangGraph Version** | 1.0.4 |
+| **Test Date** | 2026-01-06 14:51:33 UTC |
+| **LangGraph Version** | 1.0.5 |
 | **LangGraph Branch** | main |
-| **LangGraph Commit** | `4d01e69b` |
-| **Commit Date** | 2025-12-09 23:05:49 +0000 |
+| **LangGraph Commit** | `8ccead95` |
+| **Commit Date** | 2026-01-05 20:17:38 +0000 |
 
 ## Test Results
 

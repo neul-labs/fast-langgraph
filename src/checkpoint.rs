@@ -7,11 +7,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-/// Channel versions mapping
+/// Channel versions mapping - maps channel name to version number
 pub type ChannelVersions = HashMap<String, serde_json::Value>;
 
 /// Metadata associated with a checkpoint
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[doc = "Metadata associated with a checkpoint including source, step, and parent information"]
 pub struct CheckpointMetadata {
     pub source: String,
     pub step: i32,
@@ -19,6 +20,9 @@ pub struct CheckpointMetadata {
 }
 
 /// State snapshot at a given point in time
+///
+/// A Checkpoint represents the complete state of the graph at a specific
+/// point in execution, including channel values, versions, and pending writes.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Checkpoint {
     pub v: i32,
@@ -143,6 +147,7 @@ impl Checkpoint {
     }
 
     /// Get the size of the serialized checkpoint
+    #[inline]
     pub fn serialized_size(&self) -> Result<usize, LangGraphError> {
         Ok(self.to_json()?.len())
     }

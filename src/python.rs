@@ -1,6 +1,3 @@
-#![allow(unused_variables)]
-#![allow(clippy::too_many_arguments)]
-
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyTuple, PyType};
 use std::collections::HashMap;
@@ -8,6 +5,38 @@ use std::collections::HashMap;
 // Import our Rust core modules
 use crate::pregel_loop::{PregelConfig, PregelLoop};
 use crate::pregel_node::PregelNode;
+
+/// Configuration for output formatting options
+///
+/// Bundles output-related parameters to reduce function argument counts.
+/// Used by invoke, stream, ainvoke, and astream methods.
+#[pyclass]
+#[derive(Clone)]
+pub struct OutputConfig {
+    #[pyo3(get, set)]
+    pub stream_mode: Option<PyObject>,
+    #[pyo3(get, set)]
+    pub print_mode: Option<PyObject>,
+    #[pyo3(get, set)]
+    pub output_keys: Option<PyObject>,
+}
+
+#[pymethods]
+impl OutputConfig {
+    #[new]
+    #[pyo3(signature = (stream_mode=None, print_mode=None, output_keys=None))]
+    fn new(
+        stream_mode: Option<PyObject>,
+        print_mode: Option<PyObject>,
+        output_keys: Option<PyObject>,
+    ) -> Self {
+        OutputConfig {
+            stream_mode,
+            print_mode,
+            output_keys,
+        }
+    }
+}
 
 /// BaseChannel provides the base interface for all channels
 #[pyclass]
@@ -306,6 +335,7 @@ impl Checkpoint {
     /// Signature matches LangGraph's Checkpoint TypedDict
     #[new]
     #[pyo3(signature = (*, v=1, id=None, ts=None, channel_values=None, channel_versions=None, versions_seen=None, pending_sends=None, current_tasks=None))]
+    #[allow(clippy::too_many_arguments)]
     fn new(
         py: Python,
         v: i32,
@@ -531,7 +561,8 @@ impl Pregel {
     }
 
     /// Run the graph with a single input and config
-    #[pyo3(signature = (input, config=None, *, context=None, stream_mode=None, print_mode=None, output_keys=None, interrupt_before=None, interrupt_after=None, durability=None, debug=None))]
+    #[pyo3(signature = (input, config=None, *, context=None, stream_mode=None, output=None, interrupt_before=None, interrupt_after=None, durability=None, debug=None))]
+    #[allow(clippy::too_many_arguments)]
     fn invoke(
         &self,
         py: Python,
@@ -539,8 +570,7 @@ impl Pregel {
         config: Option<PyObject>,
         context: Option<PyObject>,
         stream_mode: Option<&str>,
-        print_mode: Option<PyObject>,
-        output_keys: Option<PyObject>,
+        output: Option<OutputConfig>,
         interrupt_before: Option<PyObject>,
         interrupt_after: Option<PyObject>,
         durability: Option<PyObject>,
@@ -559,13 +589,7 @@ impl Pregel {
             };
 
             if use_rust_loop {
-                return self.invoke_with_rust_loop(
-                    py,
-                    input,
-                    interrupt_before,
-                    interrupt_after,
-                    debug,
-                );
+                return self.invoke_with_rust_loop(py, input, interrupt_before, interrupt_after);
             }
         }
 
@@ -679,23 +703,11 @@ impl Pregel {
             }
 
             // Output formatting rules (in order of precedence):
-            // 1. output_keys parameter (highest precedence) → always return dict
-            // 2. output_channels as list → return dict
-            // 3. output_channels as string → return raw value
-            // 4. output_channels None/empty → return None
+            // 1. output_channels as list → return dict
+            // 2. output_channels as string → return raw value
+            // 3. output_channels None/empty → return None
 
-            // Rule 1: Check output_keys first (parameter overrides attribute)
-            if let Some(ref keys) = output_keys {
-                if let Ok(keys_list) = keys.extract::<Vec<String>>(py) {
-                    let result_dict = PyDict::new(py);
-                    for key in keys_list {
-                        result_dict.set_item(&key, current_state.clone_ref(py))?;
-                    }
-                    return Ok(result_dict.into());
-                }
-            }
-
-            // Rules 2-4: Check output_channels
+            // Rules 1-3: Check output_channels
             if let Some(ref output_channels) = self.output_channels {
                 // Check if it's Python None
                 if output_channels.as_ref(py).is_none() {
@@ -764,6 +776,7 @@ impl Pregel {
     }
 
     /// Stream graph steps for a single input
+    #[allow(clippy::too_many_arguments)]
     fn stream(
         &self,
         py: Python,
@@ -771,8 +784,7 @@ impl Pregel {
         config: Option<PyObject>,
         context: Option<PyObject>,
         stream_mode: Option<PyObject>,
-        print_mode: Option<PyObject>,
-        output_keys: Option<PyObject>,
+        output: Option<OutputConfig>,
         interrupt_before: Option<PyObject>,
         interrupt_after: Option<PyObject>,
         durability: Option<PyObject>,
@@ -790,13 +802,7 @@ impl Pregel {
             };
 
             if use_rust_loop {
-                return self.stream_with_rust_loop(
-                    py,
-                    input,
-                    interrupt_before,
-                    interrupt_after,
-                    debug,
-                );
+                return self.stream_with_rust_loop(py, input, interrupt_before, interrupt_after);
             }
         }
 
@@ -805,6 +811,8 @@ impl Pregel {
     }
 
     /// Asynchronously invoke the graph on a single input
+    #[allow(clippy::unused_self)]
+    #[allow(clippy::too_many_arguments)]
     fn ainvoke(
         &self,
         py: Python,
@@ -812,8 +820,7 @@ impl Pregel {
         config: Option<PyObject>,
         context: Option<PyObject>,
         stream_mode: Option<&str>,
-        print_mode: Option<PyObject>,
-        output_keys: Option<PyObject>,
+        output: Option<OutputConfig>,
         interrupt_before: Option<PyObject>,
         interrupt_after: Option<PyObject>,
         durability: Option<PyObject>,
@@ -824,6 +831,7 @@ impl Pregel {
     }
 
     /// Asynchronously stream graph steps for a single input
+    #[allow(clippy::too_many_arguments)]
     fn astream(
         &self,
         py: Python,
@@ -831,8 +839,7 @@ impl Pregel {
         config: Option<PyObject>,
         context: Option<PyObject>,
         stream_mode: Option<PyObject>,
-        print_mode: Option<PyObject>,
-        output_keys: Option<PyObject>,
+        output: Option<OutputConfig>,
         interrupt_before: Option<PyObject>,
         interrupt_after: Option<PyObject>,
         durability: Option<PyObject>,
@@ -847,10 +854,10 @@ impl Pregel {
     /// Batch invoke the graph with multiple inputs
     fn batch(
         &self,
-        py: Python,
+        _py: Python,
         inputs: Vec<PyObject>,
-        config: Option<PyObject>,
-        context: Option<PyObject>,
+        _config: Option<PyObject>,
+        _context: Option<PyObject>,
     ) -> PyResult<Vec<PyObject>> {
         // In a real implementation, this would execute the graph for multiple inputs
         // For now, we'll just return the inputs
@@ -860,10 +867,10 @@ impl Pregel {
     /// Asynchronously batch invoke the graph with multiple inputs
     fn abatch(
         &self,
-        py: Python,
+        _py: Python,
         inputs: Vec<PyObject>,
-        config: Option<PyObject>,
-        context: Option<PyObject>,
+        _config: Option<PyObject>,
+        _context: Option<PyObject>,
     ) -> PyResult<Vec<PyObject>> {
         // In a real implementation, this would async execute the graph for multiple inputs
         // For now, we'll just return the inputs
@@ -876,14 +883,8 @@ impl Pregel {
         // Generate schema from input_channels if available (PRIORITIZE THIS)
         // This is more specific than the builder's generic schema
         if let Some(ref input_channels) = self.input_channels {
-            eprintln!("DEBUG input_schema: Trying to extract channel name");
-
             // Try to extract as a list first (for dict-style inputs)
             if let Ok(channel_names) = input_channels.extract::<Vec<String>>(py) {
-                eprintln!(
-                    "DEBUG input_schema: input_channels is a list with {} items",
-                    channel_names.len()
-                );
                 // Multiple channels - create object schema with properties
                 let mut properties = std::collections::HashMap::new();
 
@@ -962,23 +963,16 @@ InputSchema
 
             // If input_channels is a string, get that channel's type
             if let Ok(channel_name) = input_channels.extract::<String>(py) {
-                eprintln!("DEBUG input_schema: channel_name={}", channel_name);
                 // Get the channel from self.channels
                 if let Some(channel) = self.channels.get(&channel_name) {
-                    eprintln!("DEBUG input_schema: Found channel");
                     // The channel has a 'typ' attribute that contains the Python type
                     if let Ok(channel_type) = channel.getattr(py, "typ") {
-                        eprintln!("DEBUG input_schema: Got channel.typ");
                         // Get the type name - channel_type IS the type (e.g., int, str, etc.)
                         let type_name = if let Ok(name) = channel_type.getattr(py, "__name__") {
-                            let n = name
-                                .extract::<String>(py)
-                                .unwrap_or_else(|_| "object".to_string());
-                            eprintln!("DEBUG input_schema: type_name={}", n);
-                            n
+                            name.extract::<String>(py)
+                                .unwrap_or_else(|_| "object".to_string())
                         } else {
                             // Fallback to "object"
-                            eprintln!("DEBUG input_schema: No __name__ attr");
                             "object".to_string()
                         };
 
@@ -992,8 +986,6 @@ InputSchema
                             "dict" => "object",
                             _ => "object",
                         };
-
-                        eprintln!("DEBUG input_schema: json_type={}", json_type);
 
                         // Create a Pydantic-like schema class
                         let code = format!(
@@ -1014,24 +1006,12 @@ InputSchema
                             )
                         })?;
                         return Ok(schema.into());
-                    } else {
-                        eprintln!("DEBUG input_schema: Failed to get typ attr");
                     }
-                } else {
-                    eprintln!(
-                        "DEBUG input_schema: Channel '{}' not found in self.channels",
-                        channel_name
-                    );
                 }
-            } else {
-                eprintln!("DEBUG input_schema: Failed to extract channel_name as string");
             }
-        } else {
-            eprintln!("DEBUG input_schema: No input_channels");
         }
 
         // Fallback: create a generic object schema
-        eprintln!("DEBUG input_schema: Using fallback");
 
         let code = r#"
 class MockSchema(dict):
@@ -1197,7 +1177,7 @@ MockSchema
     }
 
     /// Get the output JSON schema for the graph
-    fn get_output_jsonschema(&self, py: Python, config: Option<PyObject>) -> PyResult<PyObject> {
+    fn get_output_jsonschema(&self, py: Python, _config: Option<PyObject>) -> PyResult<PyObject> {
         // In a real implementation, this would return the actual output schema
         // For now, return an empty dict
         Ok(PyDict::new(py).into())
@@ -1216,7 +1196,6 @@ MockSchema
         input: PyObject,
         interrupt_before: Option<PyObject>,
         interrupt_after: Option<PyObject>,
-        debug: Option<PyObject>,
     ) -> PyResult<PyObject> {
         // 1. Convert Python nodes to PregelNode structures
         let mut pregel_nodes = HashMap::new();
@@ -1234,16 +1213,11 @@ MockSchema
             .and_then(|v| v.extract::<Vec<String>>(py).ok())
             .unwrap_or_default();
 
-        let debug_flag = debug
-            .and_then(|v| v.extract::<bool>(py).ok())
-            .unwrap_or(false);
-
         // 3. Create PregelConfig
         let config = PregelConfig {
             recursion_limit: 25,
             interrupt_before: interrupt_before_list,
             interrupt_after: interrupt_after_list,
-            debug: debug_flag,
         };
 
         // 4. Create PregelLoop
@@ -1313,7 +1287,6 @@ MockSchema
         input: PyObject,
         interrupt_before: Option<PyObject>,
         interrupt_after: Option<PyObject>,
-        debug: Option<bool>,
     ) -> PyResult<PyObject> {
         // 1. Convert Python nodes to PregelNode structures
         let mut pregel_nodes = HashMap::new();
@@ -1331,14 +1304,11 @@ MockSchema
             .and_then(|v| v.extract::<Vec<String>>(py).ok())
             .unwrap_or_default();
 
-        let debug_flag = debug.unwrap_or(false);
-
         // 3. Create PregelConfig
         let config = PregelConfig {
             recursion_limit: 25,
             interrupt_before: interrupt_before_list,
             interrupt_after: interrupt_after_list,
-            debug: debug_flag,
         };
 
         // 4. Create PregelLoop
@@ -1366,6 +1336,7 @@ fn fast_langgraph(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Checkpoint>()?;
     m.add_class::<Pregel>()?;
     m.add_class::<GraphExecutor>()?;
+    m.add_class::<OutputConfig>()?;
 
     // Register hybrid acceleration classes
     crate::hybrid::register_hybrid_classes(m)?;

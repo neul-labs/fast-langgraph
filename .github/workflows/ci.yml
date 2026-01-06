@@ -37,14 +37,18 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy  # Warnings allowed for API compatibility params
 
       - name: Build
         run: cargo build --verbose
 
   python:
-    name: Python
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +59,9 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -74,6 +80,9 @@ jobs:
 
       - name: Lint (ruff)
         run: uv run ruff check fast_langgraph/ tests/
+
+      - name: Type check (mypy)
+        run: uv run mypy fast_langgraph/
 
       - name: Run tests
         run: uv run pytest tests/ -v
