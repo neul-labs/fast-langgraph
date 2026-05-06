@@ -82,7 +82,7 @@ jobs:
         run: uv run ruff check fast_langgraph/ tests/
 
       - name: Type check (mypy)
-        run: uv run mypy --exclude '\.venv' fast_langgraph/
+        run: uv run mypy --no-site-packages fast_langgraph/
 
       - name: Run tests
         run: uv run pytest tests/ -v

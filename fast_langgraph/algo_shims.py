@@ -55,7 +55,7 @@ def create_accelerated_apply_writes(
             RESUME,
             RETURN,
         )
-        from langgraph.pregel._call import task_path_str
+        from langgraph.pregel._call import task_path_str  # type: ignore[attr-defined]
         from langgraph.pregel._log import logger
 
         # Sort tasks (same as original)
