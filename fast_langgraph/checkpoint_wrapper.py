@@ -91,7 +91,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[type-arg,misc]
             return None
 
         # Convert back to Checkpoint format
-        return {
+        return {  # type: ignore[return-value]
             "channel_values": checkpoint_data.get("channel_values", {}),
             "channel_versions": checkpoint_data.get("channel_versions", {}),
             "versions_seen": checkpoint_data.get("versions_seen", {}),
@@ -160,7 +160,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[type-arg,misc]
                     "checkpoint_id": checkpoint_id,
                 }
 
-                yield (config, checkpoint, metadata)
+                yield (config, checkpoint, metadata)  # type: ignore[misc]
 
     def put_writes(  # type: ignore[override]
         self, config: Dict[str, Any], writes: List[Any], task_id: str
