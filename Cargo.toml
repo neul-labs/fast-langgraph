@@ -1,6 +1,6 @@
 [package]
 name = "fast-langgraph"
-version = "0.1.14"
+version = "0.1.15"
 edition = "2021"
 description = "High-performance Rust implementation of LangGraph components"
 authors = ["Dipankar Sarkar <me@dipankar.name>"]
