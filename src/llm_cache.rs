@@ -72,9 +72,9 @@ impl RustLLMCache {
         // Get current timestamp, handling systems where time might be before Unix epoch
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|_| pyo3::exceptions::PyRuntimeError::new_err(
-                "System time is before Unix epoch"
-            ))?
+            .map_err(|_| {
+                pyo3::exceptions::PyRuntimeError::new_err("System time is before Unix epoch")
+            })?
             .as_secs() as i64;
 
         let cached_response = CachedResponse {
@@ -178,9 +178,9 @@ impl RustSQLiteLLMCache {
         let cutoff_time = if let Some(max_age) = self.max_age_seconds {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .map_err(|_| pyo3::exceptions::PyRuntimeError::new_err(
-                    "System time is before Unix epoch"
-                ))?
+                .map_err(|_| {
+                    pyo3::exceptions::PyRuntimeError::new_err("System time is before Unix epoch")
+                })?
                 .as_secs() as i64;
             Some(now - max_age)
         } else {
@@ -242,9 +242,9 @@ impl RustSQLiteLLMCache {
 
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|_| pyo3::exceptions::PyRuntimeError::new_err(
-                "System time is before Unix epoch"
-            ))?
+            .map_err(|_| {
+                pyo3::exceptions::PyRuntimeError::new_err("System time is before Unix epoch")
+            })?
             .as_secs() as i64;
 
         let conn = Connection::open(&self.db_path)
@@ -307,9 +307,9 @@ impl RustSQLiteLLMCache {
         if let Some(max_age) = self.max_age_seconds {
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .map_err(|_| pyo3::exceptions::PyRuntimeError::new_err(
-                    "System time is before Unix epoch"
-                ))?
+                .map_err(|_| {
+                    pyo3::exceptions::PyRuntimeError::new_err("System time is before Unix epoch")
+                })?
                 .as_secs() as i64;
             let cutoff = now - max_age;
 

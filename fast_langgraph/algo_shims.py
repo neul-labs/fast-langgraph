@@ -18,7 +18,12 @@ except ImportError:
     FastChannelUpdater = None
 
 
-def create_accelerated_apply_writes(original_apply_writes):
+from typing import Any, Callable
+
+
+def create_accelerated_apply_writes(
+    original_apply_writes: Callable[..., Any],
+) -> Callable[..., Any]:
     """
     Create an accelerated version of apply_writes using Rust ChannelManager.
 
@@ -29,11 +34,11 @@ def create_accelerated_apply_writes(original_apply_writes):
         return original_apply_writes
 
     def accelerated_apply_writes(
-        checkpoint,
-        channels,
-        tasks,
-        get_next_version,
-        trigger_to_nodes,
+        checkpoint: Any,
+        channels: Any,
+        tasks: Any,
+        get_next_version: Any,
+        trigger_to_nodes: Any,
     ) -> Set[str]:
         """
         Rust-accelerated version of apply_writes.
@@ -131,7 +136,9 @@ def create_accelerated_apply_writes(original_apply_writes):
     return accelerated_apply_writes
 
 
-def create_accelerated_prepare_next_tasks(original_prepare_next_tasks):
+def create_accelerated_prepare_next_tasks(
+    original_prepare_next_tasks: Callable[..., Any],
+) -> Callable[..., Any]:
     """
     Create an accelerated version of prepare_next_tasks using Rust TaskScheduler.
 
@@ -145,7 +152,9 @@ def create_accelerated_prepare_next_tasks(original_prepare_next_tasks):
     return original_prepare_next_tasks
 
 
-def create_accelerated_read_channels(original_read_channels):
+def create_accelerated_read_channels(
+    original_read_channels: Callable[..., Any],
+) -> Callable[..., Any]:
     """
     Create an accelerated version of read_channels for batch reading.
 

@@ -11,7 +11,7 @@ instead of creating new ones each time, which saves ~20ms per invocation.
 import atexit
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 class ExecutorCache:
@@ -22,8 +22,8 @@ class ExecutorCache:
     for each invocation, which was identified as the #1 bottleneck (58% of time).
     """
 
-    def __init__(self):
-        self._cache: Dict[Tuple, ThreadPoolExecutor] = {}
+    def __init__(self) -> None:
+        self._cache: Dict[Tuple[int, str], ThreadPoolExecutor] = {}
         self._lock = threading.RLock()
         self._max_workers_default = 16
 
@@ -66,7 +66,7 @@ class ExecutorCache:
             self._cache[cache_key] = executor
             return executor
 
-    def shutdown_all(self, wait: bool = True):
+    def shutdown_all(self, wait: bool = True) -> None:
         """Shutdown all cached executors."""
         with self._lock:
             for executor in self._cache.values():
@@ -76,7 +76,7 @@ class ExecutorCache:
                     pass  # Ignore errors during shutdown
             self._cache.clear()
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the cache and shutdown all executors."""
         self.shutdown_all(wait=False)
 
@@ -104,7 +104,7 @@ def get_cached_executor(
     return _executor_cache.get_executor(max_workers, thread_name_prefix)
 
 
-def shutdown_executor_cache(wait: bool = True):
+def shutdown_executor_cache(wait: bool = True) -> None:
     """
     Shutdown all cached executors.
 
@@ -116,7 +116,7 @@ def shutdown_executor_cache(wait: bool = True):
     _executor_cache.shutdown_all(wait)
 
 
-def clear_executor_cache():
+def clear_executor_cache() -> None:
     """Clear the executor cache (mainly for testing)."""
     _executor_cache.clear_cache()
 
@@ -130,21 +130,21 @@ class CachedExecutorContext:
     the executor on exit, allowing it to be reused.
     """
 
-    def __init__(self, max_workers: Optional[int] = None):
+    def __init__(self, max_workers: Optional[int] = None) -> None:
         self.max_workers = max_workers
-        self.executor = None
+        self.executor: Optional[ThreadPoolExecutor] = None
 
     def __enter__(self) -> ThreadPoolExecutor:
         self.executor = get_cached_executor(self.max_workers)
         return self.executor
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> None:
         # DO NOT shutdown - that's the whole point of caching!
         # The executor will be reused for the next invocation
         pass
 
 
-def patch_langchain_executor():
+def patch_langchain_executor() -> bool:
     """
     Patch LangChain's executor creation to use cached executors.
 
@@ -161,10 +161,12 @@ def patch_langchain_executor():
             return False
 
         # Create patched version
-        def get_executor_for_config_cached(config=None, *args, **kwargs):
+        def get_executor_for_config_cached(
+            config: Optional[Dict[str, Any]] = None, *args: Any, **kwargs: Any
+        ) -> CachedExecutorContext:
             """Cached version of get_executor_for_config."""
             # Extract max_workers from config if present
-            max_workers = None
+            max_workers: Optional[int] = None
             if config and isinstance(config, dict):
                 max_workers = config.get("max_concurrency")
 
@@ -186,7 +188,7 @@ def patch_langchain_executor():
         return False
 
 
-def unpatch_langchain_executor():
+def unpatch_langchain_executor() -> None:
     """Restore original LangChain executor creation."""
     # Implementation would restore the original function
     # For now, requires restart to unpatch

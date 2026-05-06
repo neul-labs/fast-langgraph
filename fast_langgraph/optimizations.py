@@ -14,7 +14,7 @@ Usage:
 from typing import Any, Dict
 
 
-def enable_all_optimizations(verbose: bool = True) -> Dict[str, bool]:
+def enable_all_optimizations(verbose: bool = True) -> Dict[str, Any]:
     """
     Enable all Fast LangGraph optimizations.
 
@@ -189,7 +189,7 @@ def get_optimization_status() -> Dict[str, Any]:
     return status
 
 
-def print_optimization_report():
+def print_optimization_report() -> None:
     """
     Print a detailed report of optimization status and expected performance.
     """

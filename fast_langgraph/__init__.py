@@ -11,7 +11,7 @@ from typing import Any, Optional
 
 # Try to import the Rust extension module
 try:
-    from . import fast_langgraph  # type: ignore
+    from . import fast_langgraph
 
     _rust_available = True
 except ImportError:
@@ -61,24 +61,24 @@ if _rust_available:
     LastValueChannel = LastValue
 else:
     # Fallback stubs if Rust extension is not available
-    class BaseChannel:
-        def __init__(self, *args, **kwargs):
+    class BaseChannel:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError("Rust extension not available")
 
-    class LastValue:
-        def __init__(self, *args, **kwargs):
+    class LastValue:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError("Rust extension not available")
 
-    class Checkpoint:
-        def __init__(self, *args, **kwargs):
+    class Checkpoint:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError("Rust extension not available")
 
-    class Pregel:
-        def __init__(self, *args, **kwargs):
+    class Pregel:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError("Rust extension not available")
 
-    class GraphExecutor:
-        def __init__(self, *args, **kwargs):
+    class GraphExecutor:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError("Rust extension not available")
 
     PregelExecutor = GraphExecutor

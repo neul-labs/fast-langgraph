@@ -78,7 +78,7 @@ class AcceleratedPregelLoop:
             raise RuntimeError("Accelerator not initialized")
 
         # Convert to format expected by Rust
-        return self._accelerator.get_channel_manager().apply_writes_batch(writes)
+        return self._accelerator.get_channel_manager().apply_writes_batch(writes)  # type: ignore[no-any-return]
 
     def get_triggered_nodes(self, updated_channels: List[str]) -> List[str]:
         """
@@ -94,7 +94,7 @@ class AcceleratedPregelLoop:
             raise RuntimeError("Accelerator not initialized")
 
         # Use Rust task scheduler for fast trigger detection
-        return self._accelerator.task_scheduler.get_triggered_nodes(updated_channels)
+        return self._accelerator.task_scheduler.get_triggered_nodes(updated_channels)  # type: ignore[no-any-return]
 
     def execute_step(self, writes: List[Tuple[str, Any]]) -> Tuple[List[str], bool]:
         """
@@ -112,7 +112,7 @@ class AcceleratedPregelLoop:
         if not self._initialized:
             raise RuntimeError("Accelerator not initialized")
 
-        return self._accelerator.execute_step(writes)
+        return self._accelerator.execute_step(writes)  # type: ignore[no-any-return]
 
     def get_channel_values(
         self, channel_names: Optional[List[str]] = None
@@ -130,7 +130,7 @@ class AcceleratedPregelLoop:
         if not self._initialized:
             raise RuntimeError("Accelerator not initialized")
 
-        return self._accelerator.get_channel_manager().get_all_values()
+        return self._accelerator.get_channel_manager().get_all_values()  # type: ignore[no-any-return]
 
     def checkpoint(self) -> Dict[str, Any]:
         """
@@ -142,7 +142,7 @@ class AcceleratedPregelLoop:
         if not self._initialized:
             raise RuntimeError("Accelerator not initialized")
 
-        return self._accelerator.checkpoint()
+        return self._accelerator.checkpoint()  # type: ignore[no-any-return]
 
     def reset(self) -> None:
         """Reset the accelerator for a new invocation."""
@@ -151,7 +151,7 @@ class AcceleratedPregelLoop:
     @property
     def step(self) -> int:
         """Get the current step number."""
-        return self._accelerator.get_step()
+        return self._accelerator.get_step()  # type: ignore[no-any-return]
 
 
 def accelerate_apply_writes(
@@ -274,7 +274,7 @@ _original_apply_writes = None
 _original_prepare_next_tasks = None
 
 
-def patch_algo():
+def patch_algo() -> bool:
     """
     Patch langgraph.pregel._algo with accelerated implementations.
 
@@ -300,7 +300,7 @@ def patch_algo():
         return False
 
 
-def unpatch_algo():
+def unpatch_algo() -> bool:
     """Restore original _algo implementations."""
     global _original_apply_writes
 

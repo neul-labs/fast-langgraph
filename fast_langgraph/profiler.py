@@ -8,20 +8,20 @@ import json
 import time
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional, TypeVar
 
 
 class NodeProfiler:
     """Profile individual node execution times."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.node_times: Dict[str, List[float]] = defaultdict(list)
         self.node_counts: Dict[str, int] = defaultdict(int)
         self.current_node: Optional[str] = None
         self.start_time: Optional[float] = None
 
     @contextmanager
-    def profile_node(self, node_name: str):
+    def profile_node(self, node_name: str) -> Iterator[None]:
         """Context manager to profile a single node execution."""
         self.current_node = node_name
         self.start_time = time.perf_counter()
@@ -36,11 +36,11 @@ class NodeProfiler:
 
     def get_stats(self) -> Dict[str, Dict[str, float]]:
         """Get profiling statistics for all nodes."""
-        stats = {}
+        stats: Dict[str, Dict[str, float]] = {}
         for node_name, times in self.node_times.items():
             if times:
                 stats[node_name] = {
-                    "count": self.node_counts[node_name],
+                    "count": float(self.node_counts[node_name]),
                     "total_time": sum(times),
                     "avg_time": sum(times) / len(times),
                     "min_time": min(times),
@@ -48,7 +48,7 @@ class NodeProfiler:
                 }
         return stats
 
-    def print_report(self):
+    def print_report(self) -> None:
         """Print a formatted profiling report."""
         stats = self.get_stats()
 
@@ -73,7 +73,7 @@ class NodeProfiler:
         for node_name, node_stats in sorted_stats:
             print(
                 f"{node_name:<30} "
-                f"{node_stats['count']:>8} "
+                f"{int(node_stats['count']):>8} "
                 f"{node_stats['total_time']*1000:>12.2f} "
                 f"{node_stats['avg_time']*1000:>12.2f} "
                 f"{node_stats['min_time']*1000:>12.2f} "
@@ -84,7 +84,7 @@ class NodeProfiler:
 
         # Summary
         total_time = sum(s["total_time"] for s in stats.values())
-        total_calls = sum(s["count"] for s in stats.values())
+        total_calls = sum(int(s["count"]) for s in stats.values())
         print(f"\nTotal execution time: {total_time*1000:.2f} ms")
         print(f"Total node calls: {total_calls}")
         print(f"Average time per call: {(total_time/total_calls)*1000:.2f} ms")
@@ -94,7 +94,7 @@ class NodeProfiler:
 class GraphProfiler:
     """Comprehensive profiling for LangGraph execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.node_profiler = NodeProfiler()
         self.graph_runs: List[Dict[str, Any]] = []
         self.current_run_start: Optional[float] = None
@@ -104,10 +104,13 @@ class GraphProfiler:
         self.cache_misses = 0
 
     @contextmanager
-    def profile_run(self):
+    def profile_run(self) -> Iterator["GraphProfiler"]:
         """Context manager to profile an entire graph run."""
         self.current_run_start = time.perf_counter()
-        run_data = {"start_time": self.current_run_start, "nodes_executed": []}
+        run_data: Dict[str, Any] = {
+            "start_time": self.current_run_start,
+            "nodes_executed": [],
+        }
 
         try:
             yield self
@@ -118,19 +121,19 @@ class GraphProfiler:
             self.graph_runs.append(run_data)
             self.current_run_start = None
 
-    def record_checkpoint_save(self):
+    def record_checkpoint_save(self) -> None:
         """Record a checkpoint save operation."""
         self.checkpoints_saved += 1
 
-    def record_checkpoint_load(self):
+    def record_checkpoint_load(self) -> None:
         """Record a checkpoint load operation."""
         self.checkpoints_loaded += 1
 
-    def record_cache_hit(self):
+    def record_cache_hit(self) -> None:
         """Record a cache hit."""
         self.cache_hits += 1
 
-    def record_cache_miss(self):
+    def record_cache_miss(self) -> None:
         """Record a cache miss."""
         self.cache_misses += 1
 
@@ -162,7 +165,7 @@ class GraphProfiler:
             "node_stats": self.node_profiler.get_stats(),
         }
 
-    def print_report(self):
+    def print_report(self) -> None:
         """Print a comprehensive profiling report."""
         summary = self.get_summary()
 
@@ -193,7 +196,7 @@ class GraphProfiler:
         # Print node profiling report
         self.node_profiler.print_report()
 
-    def export_json(self, filename: str):
+    def export_json(self, filename: str) -> None:
         """Export profiling data to JSON file."""
         data = self.get_summary()
         with open(filename, "w") as f:
@@ -201,17 +204,20 @@ class GraphProfiler:
         print(f"Profiling data exported to {filename}")
 
 
-def profile_function(func: Callable) -> Callable:
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def profile_function(func: F) -> F:
     """Decorator to profile a function's execution time."""
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - start
         print(f"{func.__name__} took {elapsed*1000:.2f} ms")
         return result
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
 class PerformanceRecommendations:
@@ -220,7 +226,7 @@ class PerformanceRecommendations:
     @staticmethod
     def analyze(profiler: GraphProfiler) -> List[str]:
         """Analyze profiling data and return recommendations."""
-        recommendations = []
+        recommendations: List[str] = []
         summary = profiler.get_summary()
 
         if "error" in summary:
@@ -254,7 +260,7 @@ class PerformanceRecommendations:
                 for node_name, stats in slowest:
                     recommendations.append(
                         f"   - {node_name}: {stats['avg_time']*1000:.2f} ms avg "
-                        f"({stats['count']} calls, {stats['total_time']*1000:.2f} ms total)"
+                        f"({int(stats['count'])} calls, {stats['total_time']*1000:.2f} ms total)"
                     )
 
                 # Check if slowest node dominates
@@ -289,7 +295,7 @@ class PerformanceRecommendations:
         )
 
     @staticmethod
-    def print_recommendations(profiler: GraphProfiler):
+    def print_recommendations(profiler: GraphProfiler) -> None:
         """Print optimization recommendations."""
         print("\n" + "=" * 80)
         print("Performance Recommendations")

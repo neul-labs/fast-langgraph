@@ -15,7 +15,7 @@ from langgraph.checkpoint.base import (
 )
 
 
-class RustCheckpointSaver(BaseCheckpointSaver):
+class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
     """
     LangGraph-compatible checkpoint saver using RustCheckpointer.
 
@@ -23,7 +23,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):
     the high-performance RustCheckpointer backend for storage.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the RustCheckpointSaver."""
         try:
             from .fast_langgraph import RustCheckpointer
@@ -99,7 +99,9 @@ class RustCheckpointSaver(BaseCheckpointSaver):
             "ts": checkpoint_id,
         }
 
-    def get_tuple(self, config: Dict[str, Any]) -> Optional[tuple]:
+    def get_tuple(
+        self, config: Dict[str, Any]
+    ) -> Optional[tuple[Dict[str, Any], Checkpoint, Dict[str, Any]]]:
         """
         Get checkpoint tuple (config, checkpoint, metadata).
 
@@ -114,7 +116,10 @@ class RustCheckpointSaver(BaseCheckpointSaver):
             return None
 
         thread_id = config.get("configurable", {}).get("thread_id", "default")
-        metadata = {"thread_id": thread_id, "checkpoint_id": checkpoint.get("ts")}
+        metadata: Dict[str, Any] = {
+            "thread_id": thread_id,
+            "checkpoint_id": checkpoint.get("ts"),
+        }
 
         return (config, checkpoint, metadata)
 
@@ -122,7 +127,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):
         self,
         config: Dict[str, Any],
         limit: Optional[int] = None,
-    ) -> Iterator[tuple[Dict[str, Any], Checkpoint, CheckpointMetadata]]:
+    ) -> Iterator[tuple[Dict[str, Any], Checkpoint, Dict[str, Any]]]:
         """
         List checkpoints for a thread.
 
@@ -142,7 +147,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):
         for checkpoint_id in checkpoint_ids:
             checkpoint_data = self._rust_checkpointer.get(thread_id, checkpoint_id)
             if checkpoint_data:
-                checkpoint = {
+                checkpoint: Dict[str, Any] = {
                     "channel_values": checkpoint_data.get("channel_values", {}),
                     "channel_versions": checkpoint_data.get("channel_versions", {}),
                     "versions_seen": checkpoint_data.get("versions_seen", {}),
@@ -150,11 +155,14 @@ class RustCheckpointSaver(BaseCheckpointSaver):
                     "ts": checkpoint_id,
                 }
 
-                metadata = {"thread_id": thread_id, "checkpoint_id": checkpoint_id}
+                metadata: Dict[str, Any] = {
+                    "thread_id": thread_id,
+                    "checkpoint_id": checkpoint_id,
+                }
 
                 yield (config, checkpoint, metadata)
 
-    def put_writes(self, config: Dict[str, Any], writes: list, task_id: str) -> None:
+    def put_writes(self, config: Dict[str, Any], writes: list[Any], task_id: str) -> None:  # type: ignore[valid-type]
         """
         Store intermediate writes.
 
