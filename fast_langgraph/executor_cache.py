@@ -174,7 +174,7 @@ def patch_langchain_executor() -> bool:
             return CachedExecutorContext(max_workers)
 
         # Apply patch
-        lc_config.get_executor_for_config = get_executor_for_config_cached
+        lc_config.get_executor_for_config = get_executor_for_config_cached  # type: ignore[assignment]
 
         print("✓ Patched LangChain executor to use caching")
         print("  Expected speedup: 2-3x for graph invocations")

@@ -6,7 +6,7 @@ with LangGraph's BaseCheckpointSaver interface.
 """
 
 from collections.abc import Iterator
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from langgraph.checkpoint.base import (
     BaseCheckpointSaver,
@@ -15,7 +15,7 @@ from langgraph.checkpoint.base import (
 )
 
 
-class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
+class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[type-arg,misc]
     """
     LangGraph-compatible checkpoint saver using RustCheckpointer.
 
@@ -35,7 +35,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
                 "Build the Rust extension with: uv run maturin develop --release"
             ) from e
 
-    def put(
+    def put(  # type: ignore[override]
         self,
         config: Dict[str, Any],
         checkpoint: Checkpoint,
@@ -62,7 +62,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
 
         self._rust_checkpointer.put(thread_id, str(checkpoint_id), checkpoint_dict)
 
-    def get(
+    def get(  # type: ignore[override]
         self,
         config: Dict[str, Any],
     ) -> Optional[Checkpoint]:
@@ -99,7 +99,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
             "ts": checkpoint_id,
         }
 
-    def get_tuple(
+    def get_tuple(  # type: ignore[override]
         self, config: Dict[str, Any]
     ) -> Optional[tuple[Dict[str, Any], Checkpoint, Dict[str, Any]]]:
         """
@@ -123,7 +123,7 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
 
         return (config, checkpoint, metadata)
 
-    def list(
+    def list(  # type: ignore[override]
         self,
         config: Dict[str, Any],
         limit: Optional[int] = None,
@@ -162,7 +162,9 @@ class RustCheckpointSaver(BaseCheckpointSaver):  # type: ignore[misc]
 
                 yield (config, checkpoint, metadata)
 
-    def put_writes(self, config: Dict[str, Any], writes: list[Any], task_id: str) -> None:  # type: ignore[valid-type]
+    def put_writes(  # type: ignore[override]
+        self, config: Dict[str, Any], writes: List[Any], task_id: str
+    ) -> None:
         """
         Store intermediate writes.
 
