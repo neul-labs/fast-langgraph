@@ -271,7 +271,7 @@ mod tests {
 
             // Should have all 5 values
             let result = channel.get(py).unwrap();
-            let list = result.downcast_bound::<pyo3::types::PyList>(py).unwrap();
+            let list = result.downcast::<pyo3::types::PyList>(py).unwrap();
             assert_eq!(list.len(), 5);
 
             // Test checkpoint
@@ -281,7 +281,7 @@ mod tests {
 
             assert!(new_channel.is_available());
             let restored = new_channel.get(py).unwrap();
-            let restored_list = restored.downcast_bound::<pyo3::types::PyList>(py).unwrap();
+            let restored_list = restored.downcast::<pyo3::types::PyList>(py).unwrap();
             assert_eq!(restored_list.len(), 5);
         });
     }
@@ -303,7 +303,7 @@ mod tests {
 
             // Should only have the latest 2 values
             let result = channel.get(py).unwrap();
-            let list = result.downcast_bound::<pyo3::types::PyList>(py).unwrap();
+            let list = result.downcast::<pyo3::types::PyList>(py).unwrap();
             assert_eq!(list.len(), 2);
             assert_eq!(list.get_item(0).unwrap().extract::<i32>().unwrap(), 3);
             assert_eq!(list.get_item(1).unwrap().extract::<i32>().unwrap(), 4);

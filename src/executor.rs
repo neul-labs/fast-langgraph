@@ -290,7 +290,6 @@ impl Executor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
 
     #[test]
     fn test_state_operations() {

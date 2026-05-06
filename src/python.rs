@@ -335,7 +335,7 @@ impl Checkpoint {
     /// Signature matches LangGraph's Checkpoint TypedDict
     #[new]
     #[pyo3(signature = (*, v=1, id=None, ts=None, channel_values=None, channel_versions=None, versions_seen=None, pending_sends=None, current_tasks=None))]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, unused_variables)]
     fn new(
         py: Python,
         v: i32,
@@ -562,7 +562,7 @@ impl Pregel {
 
     /// Run the graph with a single input and config
     #[pyo3(signature = (input, config=None, *, context=None, stream_mode=None, output=None, interrupt_before=None, interrupt_after=None, durability=None, debug=None))]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, unused_variables)]
     fn invoke(
         &self,
         py: Python,
@@ -776,7 +776,7 @@ impl Pregel {
     }
 
     /// Stream graph steps for a single input
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, unused_variables)]
     fn stream(
         &self,
         py: Python,
@@ -812,7 +812,7 @@ impl Pregel {
 
     /// Asynchronously invoke the graph on a single input
     #[allow(clippy::unused_self)]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, unused_variables)]
     fn ainvoke(
         &self,
         py: Python,
@@ -831,7 +831,7 @@ impl Pregel {
     }
 
     /// Asynchronously stream graph steps for a single input
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, unused_variables)]
     fn astream(
         &self,
         py: Python,

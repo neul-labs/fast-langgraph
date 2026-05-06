@@ -166,7 +166,7 @@ mod tests {
         pyo3::prepare_freethreaded_python();
 
         Python::with_gil(|py| {
-            let func = py.eval_bound("lambda x: x + 1", None, None).unwrap();
+            let func = py.eval("lambda x: x + 1", None, None).unwrap();
             let node = Node::new("test".to_string(), func.to_object(py));
 
             assert_eq!(node.name, "test");

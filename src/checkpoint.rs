@@ -380,7 +380,7 @@ mod tests {
         let checkpoint = Checkpoint::new();
         assert_eq!(checkpoint.v, 1);
         assert!(!checkpoint.id.is_empty());
-        assert!(!checkpoint.channel_values.is_empty() || true); // May be empty initially
+        // channel_values may be empty initially, no assertion needed
     }
 
     #[test]

@@ -329,7 +329,7 @@ mod tests {
 
         Python::with_gil(|py| {
             let mut executor = PregelCore::new();
-            let func = py.eval_bound("lambda x: x + 1", None, None).unwrap();
+            let func = py.eval("lambda x: x + 1", None, None).unwrap();
             let node = Node::new("test".to_string(), func.to_object(py));
 
             executor.add_node(node);
@@ -354,7 +354,7 @@ mod tests {
             let mut executor = PregelCore::new();
 
             // Create a simple node that adds 1
-            let func = py.eval_bound("lambda x: x + 1", None, None).unwrap();
+            let func = py.eval("lambda x: x + 1", None, None).unwrap();
             let node = Node::with_channels(
                 "add_one".to_string(),
                 func.to_object(py),
@@ -401,7 +401,7 @@ mod tests {
             let mut executor = PregelCore::new();
 
             // Node 1: x + 1
-            let func1 = py.eval_bound("lambda x: x + 1", None, None).unwrap();
+            let func1 = py.eval("lambda x: x + 1", None, None).unwrap();
             let node1 = Node::with_channels(
                 "add_one".to_string(),
                 func1.to_object(py),
@@ -410,7 +410,7 @@ mod tests {
             );
 
             // Node 2: x * 2
-            let func2 = py.eval_bound("lambda x: x * 2", None, None).unwrap();
+            let func2 = py.eval("lambda x: x * 2", None, None).unwrap();
             let node2 = Node::with_channels(
                 "multiply_two".to_string(),
                 func2.to_object(py),

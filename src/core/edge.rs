@@ -167,7 +167,7 @@ mod tests {
 
         Python::with_gil(|py| {
             // Create a condition function that returns "yes" or "no"
-            let condition = py.eval_bound("lambda state: 'yes'", None, None).unwrap();
+            let condition = py.eval("lambda state: 'yes'", None, None).unwrap();
 
             let mut branches = HashMap::new();
             branches.insert("yes".to_string(), "node_yes".to_string());
