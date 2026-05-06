@@ -18,6 +18,9 @@ class _CachedWrapper:
         self.__name__ = getattr(func, "__name__", "cached_function")
         self.__doc__ = getattr(func, "__doc__", None)
 
+    def __repr__(self) -> str:
+        return f"<cached wrapper for {self.__name__}>"
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         result = self._cache.get(args, kwargs if kwargs else None)
         if result is not None:
