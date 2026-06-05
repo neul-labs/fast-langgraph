@@ -1,6 +1,6 @@
 site_name: Fast-LangGraph
 site_description: High-performance Rust accelerators for LangGraph applications
-site_url: https://fast-langgraph.docs.neullabs.com/
+site_url: https://docs.neullabs.com/fast-langgraph/
 repo_url: https://github.com/neul-labs/fast-langgraph
 repo_name: neul-labs/fast-langgraph
 edit_uri: edit/main/documentation/docs/
