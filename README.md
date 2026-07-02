@@ -4,7 +4,9 @@
 [![PyPI](https://img.shields.io/pypi/v/fast-langgraph)](https://pypi.org/project/fast-langgraph/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-High-performance Rust accelerators for [LangGraph](https://github.com/langchain-ai/langgraph) applications. Drop-in components that provide **up to 700x speedups** for checkpoint operations and **10-50x speedups** for state management.
+**Rust accelerators for [LangGraph](https://github.com/langchain-ai/langgraph) — up to 700x faster checkpoints.** Drop-in components that provide **up to 700x speedups** for checkpoint operations and **10-50x speedups** for state management.
+
+**Links:** [Website](https://fast-langgraph.neullabs.com) · [Docs](https://docs.neullabs.com/fast-langgraph) · [GitHub](https://github.com/neul-labs/fast-langgraph)
 
 ## Why Fast-LangGraph?
 
@@ -25,6 +27,14 @@ or
 
 ```bash
 uv add fast-langgraph
+```
+
+### Rust crate
+
+`fast-langgraph` is also published to [crates.io](https://crates.io/crates/fast-langgraph). The Python package above is the intended interface for most users; to use the Rust crate directly:
+
+```bash
+cargo add fast-langgraph
 ```
 
 ## Acceleration Modes
@@ -201,8 +211,9 @@ Authoritative docs live under [`documentation/docs/`](documentation/docs/index.m
 
 ## Project Metadata
 
-- **Author:** Dipankar Sarkar (<me@dipankar.name>)
-- **Organization:** Neul Labs
+- **Maintainer:** Neul Labs (<contact@neullabs.com>)
+- **Website:** https://fast-langgraph.neullabs.com
+- **Documentation:** https://docs.neullabs.com/fast-langgraph
 - **Repository:** https://github.com/neul-labs/fast-langgraph
 - **License:** MIT
 
@@ -216,6 +227,17 @@ See the [examples/](examples/) directory for complete working examples:
 ## Contributing
 
 Contributions welcome! See [documentation/docs/development/contributing.md](documentation/docs/development/contributing.md) for setup instructions.
+
+## Part of the Neul Labs toolchain
+
+Fast-LangGraph is part of the Neul Labs accelerators family. Explore the rest of the toolchain from [Neul Labs](https://www.neullabs.com):
+
+| Project | What it does |
+|---------|--------------|
+| [fast-litellm](https://fast-litellm.neullabs.com) | Drop-in Rust acceleration for LiteLLM. |
+| [fast-crewai](https://fast-crewai.neullabs.com) | Drop-in Rust acceleration for CrewAI. |
+| [fast-axolotl](https://fast-axolotl.neullabs.com) | Rust extensions for Axolotl fine-tuning — no OOM on large datasets. |
+| [fastagentic](https://fastagentic.neullabs.com) | Build agents with any framework; ship them with FastAgentic. |
 
 ## License
 

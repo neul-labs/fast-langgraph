@@ -1,9 +1,9 @@
 [project]
 name = "fast-langgraph"
 dynamic = ["version"]
-description = "High-performance Rust implementation of LangGraph components"
-authors = [{ name = "Dipankar Sarkar", email = "me@dipankar.name" }]
-maintainers = [{ name = "Neul Labs", email = "hello@neul.ai" }]
+description = "Rust accelerators for LangGraph — up to 700x faster checkpoints."
+authors = [{ name = "Neul Labs", email = "contact@neullabs.com" }]
+maintainers = [{ name = "Neul Labs", email = "contact@neullabs.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.9"
@@ -28,9 +28,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/neul-labs/fast-langgraph"
+Homepage = "https://fast-langgraph.neullabs.com"
 Repository = "https://github.com/neul-labs/fast-langgraph"
-Documentation = "https://github.com/neul-labs/fast-langgraph/tree/main/documentation/docs"
+Documentation = "https://docs.neullabs.com/fast-langgraph"
 Issues = "https://github.com/neul-labs/fast-langgraph/issues"
 
 [project.optional-dependencies]

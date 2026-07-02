@@ -2,12 +2,12 @@
 name = "fast-langgraph"
 version = "0.1.15"
 edition = "2021"
-description = "High-performance Rust implementation of LangGraph components"
-authors = ["Dipankar Sarkar <me@dipankar.name>"]
+description = "Rust accelerators for LangGraph — up to 700x faster checkpoints."
+authors = ["Neul Labs <contact@neullabs.com>"]
 license = "MIT"
 repository = "https://github.com/neul-labs/fast-langgraph"
-homepage = "https://github.com/neul-labs/fast-langgraph"
-documentation = "https://github.com/neul-labs/fast-langgraph/tree/main/documentation/docs"
+homepage = "https://fast-langgraph.neullabs.com"
+documentation = "https://docs.neullabs.com/fast-langgraph"
 readme = "README.md"
 keywords = ["langgraph", "rust", "pregel", "ai", "graph", "performance"]
 categories = ["science", "algorithms", "data-structures"]
